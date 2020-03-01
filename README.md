@@ -15,19 +15,27 @@ You are given a scant offering of goods to start out your journey. Make the most
 
 Throughout your playthrough, you will be wheeling and dealing in a variety of good, but for simplicity's sake they fall into the the 6 categories below. Their prices will range from the lowest documented price, up to the highest, as well as a rare chance for any given category to be significantly above or below even that!
 
-| Item           | Lowest Normal Price | Highest Normal Price |
-| -------------- | :-----------------: | :------------------: |
-| YWI*           |       200,000       |       200,000        |
-| Artifacts      |        1500         |         3000         |
-| Wands          |         500         |         1400         |
-| Armor          |         100         |         450          |
-| Weapons        |         30          |          90          |
-| Scrolls        |          7          |          25          |
-| Health Potions |          1          |          6           |
+| Item      | Lowest Normal Price | Highest Normal Price |
+| --------- | :-----------------: | :------------------: |
+| YWI*      |       200,000       |       200,000        |
+| Artifacts |        1500         |         3000         |
+| Wands     |         500         |         1400         |
+| Armor     |         100         |         450          |
+| Weapons   |         30          |          90          |
+| Scrolls   |          7          |          25          |
+| Potions   |          1          |          6           |
 
 \*Yendorian Wallet of Immortality
 
 Prices fluxuate greatly over the natural course of an adventurers lifetime in a roguelike dungeon....even more so with the chance for further chaos as you teleport through time and space to visit them!
+
+## Locations available
+1. Golden Krone Hotel
+2. Cogmind
+3. Nethack
+4. Brogue
+5. Dungeon Crawl Stone Soup?
+6. ADOM?
 
 ## Possible features
 * Interdimensional roguelike stash for excess goods
