@@ -8,13 +8,21 @@ scrn = {}
 
 function _init()
     -- show_menu()
-    -- show_navigation()
     -- show_intro()
-    show_roguelike()
-    init_prices()
+    -- show_navigation()
+    -- show_bsl()
+    -- show_transaction()
+    show_final_transaction()
+
+    p.cursor.nav=nav_menu["gkh"]
+    p.cursor.items = items["weapons"]
+    p.cursor.bsl=bsl["buy"]
+    p.cursor.trans=trans_menu["middle"]
+
+    randomize_prices()
 end
 
-function init_prices()
+function randomize_prices()
     for k, v in pairs(items) do
         v.curr = flr(rnd(v.high-v.low)+v.low+1)
     end
@@ -25,11 +33,12 @@ function _update()
 end
 
 function _draw()
+    cls()
+    -- rect(0,0,127,127,14)
     scrn.drw()
 end
 
 function show_menu()
-    cls()
     scrn.upd = menu_update
     scrn.drw = menu_draw
 end
@@ -41,7 +50,6 @@ function menu_update()
 end
 
 function menu_draw()
-    cls()
     print("shopkeeprl", 40, 20, 7)
 
     if frame < 10 then
@@ -52,7 +60,9 @@ function menu_draw()
 end
 
 function show_intro()
-    cls()
+    -- todo: create intro texts-- if (btnp(5)) then
+        
+    -- end that show only once for each roguelike
     scrn.upd = intro_update
     scrn.drw = intro_draw
 end
@@ -64,19 +74,17 @@ function intro_update()
 end
 
 function intro_draw()
+    -- todo: add help text and home roguelike
     long_printer(intro, 0, 7)
-    print("select home roguelike", 0, 90, 7)
-    print("add some button help", 0, 90, 7)
     print("press z to play", 30, 100, 7)
 end
 
 function show_navigation()
-    cls()
     scrn.upd = nav_update
     scrn.drw = nav_draw
 end
 
--- Locking y values for top and bottom half
+-- locking y values for top and bottom half
 top_half_y=28
 bottom_half_y=85
 
@@ -86,40 +94,50 @@ nav_coords = {
     x_off = 55,
     y_off = 8
 }
-
+nav_map = {"gkh","cog","net","brogue","dcss","adom"}
 nav_menu = {
-    {{
+    gkh={
         title="gkh",
         x=nav_coords.base_x,
         y=nav_coords.base_y,
-        c=10
-    },{
+        c=10,
+        pos=1
+    },
+    cog={
         title="cogmind", 
         x=nav_coords.base_x,
         y=nav_coords.base_y+nav_coords.y_off,
-        c=11
-    },{
+        c=11,
+        pos=2
+    },
+    net={
         title="nethack",
         x=nav_coords.base_x,
         y=nav_coords.base_y+nav_coords.y_off*2,
-        c=12
-    }},
-    {{
+        c=12,
+        pos=3
+    },
+    brogue={
         title="brogue",
         x=nav_coords.base_x+nav_coords.x_off,
         y=nav_coords.base_y, 
-        c=4
-    },{
+        c=4,
+        pos=4
+    },
+    dcss={
         title="dcss",
         x=nav_coords.base_x+nav_coords.x_off,
         y=nav_coords.base_y+nav_coords.y_off,
-        c=9
-    },{
+        c=9,
+        pos=5
+    },
+    adom={
         title="adom",
         x=nav_coords.base_x+nav_coords.x_off,
         y=nav_coords.base_y+nav_coords.y_off*2,
-        c=2
-    }}
+        c=2,
+        pos=6
+    }
 }
 
 inv_coords = {
@@ -135,15 +153,60 @@ stash_coords = {
     y_off = 7
 }
 
+-- trying hardcoded explicit cuz sheesh
+bsl_map = {"buy","sell","leave"}
+bsl = {
+    y=112,
+    buy={
+        title="buy",
+        x=27,
+        pos=1
+    },
+    sell={
+        title="sell",
+        x=52,
+        pos=2
+    },
+    leave={
+        title="leave",
+        x=82,
+        pos=3
+    },
+}
+
+trans_map ={"middle","all","cust"}
+trans_menu = {
+    y=110,
+    middle={
+        amt=0,
+        x=15,
+        pos=1
+    },
+    all={
+        amt=0,
+        x=42,
+        pos=2
+    },
+    cust={
+        amt="custom",
+        x=90,
+        pos=3
+    }
+}
+
+-- player data
 p = {
+    money=5000,
+    inf_trans ={
+        buying=false,
+        selling=false,
+        curr_amt=0
+    },
     cursor={
-        nav={
-            x=1,
-            y=1
-        },
-        items={
-            
-        }
+        nav={},
+        item={},
+        bsl={},
+        trans={}
     },
     inventory={{disp="artifacts",amt=0},
     {disp="wands",amt=0},
@@ -161,26 +224,25 @@ p = {
 }
 
 function nav_update()
-    if (btnp(0)) and p.cursor.nav.x > 1 then
-        p.cursor.nav.x -= 1
+    if (btnp(0)) and p.cursor.nav.pos > 3 then
+        p.cursor.nav = nav_menu[nav_map[p.cursor.nav.pos-3]]
     end
-    if (btnp(1)) and p.cursor.nav.x < #nav_menu then
-        p.cursor.nav.x += 1
+    if (btnp(1)) and p.cursor.nav.pos <= 3 then
+        p.cursor.nav = nav_menu[nav_map[p.cursor.nav.pos+3]]
     end
-    if (btnp(2)) and p.cursor.nav.y > 1 then
-        p.cursor.nav.y -= 1
+    if (btnp(2)) and p.cursor.nav.pos > 1 then
+        p.cursor.nav = nav_menu[nav_map[p.cursor.nav.pos-1]]
     end
-    if (btnp(3)) and p.cursor.nav.y < #nav_menu[p.cursor.nav.x] then
-        p.cursor.nav.y += 1
+    if (btnp(3)) and p.cursor.nav.pos < 6 then
+        p.cursor.nav = nav_menu[nav_map[p.cursor.nav.pos+1]]
     end
     if (btnp(5)) then
-        show_roguelike()
+        p.cursor.nav = nav_menu["gkh"] -- back to baseline
+        show_bsl()
     end
 end
 
 function nav_draw()
-    cls()
-    rect(0,0,127,127,14)
     -- player inventory
     draw_inventory(7)
 
@@ -191,9 +253,7 @@ function nav_draw()
     draw_dungeon_selection(7)
 
     -- player cursor
-    local curs_x = nav_menu[p.cursor.nav.x][p.cursor.nav.y].x 
-    local curs_y = nav_menu[p.cursor.nav.x][p.cursor.nav.y].y
-    spr(0,curs_x-10,curs_y-1)
+    spr(0,p.cursor.nav.x-10,p.cursor.nav.y-1)
 end
 
 function draw_inventory(c)
@@ -203,6 +263,7 @@ function draw_inventory(c)
         (inv_coords.base_x-5)+inv_coords.x_off+13,
         70,
         c)
+
     print("inventory", inv_coords.base_x+3, inv_coords.base_y-12, c)
     x = inv_coords.base_x
     y = inv_coords.base_y
@@ -231,41 +292,163 @@ function draw_stash(c)
 end
 
 function draw_dungeon_selection(c)
-    x = nav_coords.base_x
-    y = nav_coords.base_y
-    for i=1,#nav_menu do
-        for z=1,#nav_menu[i] do
-            item = nav_menu[i][z]
-            print(item.title, item.x, item.y, item.c)
-        end
+    for k,rog in pairs(nav_menu) do
+        print(rog.title, rog.x,rog.y,rog.c)
     end
-    rect(0,nav_coords.base_y-10,127,115,7)
+    rect(0,nav_coords.base_y-10,127,127,7)
 end
 
-function show_roguelike()
-    cls()
-    scrn.drw = roguelike_draw
-    scrn.upd = roguelike_update
+function show_bsl()
+    scrn.drw = bsl_draw
+    scrn.upd = bsl_update
 end
 
-function roguelike_draw()
-    -- TODO: create intro texts that show only once for each roguelike
-    cls()
+function bsl_draw()
     draw_inventory(7)
     draw_stash(7)
 
     draw_prices(7)
+    draw_bsl(7)
+
+    rect(0,nav_coords.base_y-10,127,127,7)
+    
+    -- player cursor
+    spr(0,p.cursor.bsl.x-10, bsl.y-1)
 end
 
-function roguelike_update()
-
+function bsl_update()
+    if (btnp(0)) and p.cursor.bsl.pos > 1 then
+        p.cursor.bsl = bsl[bsl_map[p.cursor.bsl.pos-1]]
+    end
+    if (btnp(1)) and p.cursor.bsl.pos < 3 then
+        p.cursor.bsl = bsl[bsl_map[p.cursor.bsl.pos+1]]
+    end
+    if (btnp(5)) then
+        if p.cursor.bsl.title == "leave" then
+            p.cursor.bsl = bsl["buy"]
+            randomize_prices()
+            show_navigation() 
+        else
+            show_transaction()
+        end
+    end
 end
 
-item_coords ={
-    base_x = 8,
-    base_y = 85,
+function draw_bsl(c)
+    for k,v in pairs(bsl) do
+        print(v.title,v.x,bsl.y,c)
+    end
+end
+
+function show_transaction()
+    scrn.drw = transaction_draw
+    scrn.upd = transaction_update
+end
+
+function transaction_draw()
+    draw_inventory(7)
+    draw_stash(7)
+
+    draw_prices(7)
+    draw_bsl(7)
+
+    rect(
+        p.cursor.bsl.x-3,
+        bsl.y-3,
+        (p.cursor.bsl.x-3)+#p.cursor.bsl.title*5.5,
+        (bsl.y-3) + 10,
+        7)
+
+    rect(0,nav_coords.base_y-10,127,127,7)
+    
+    -- player cursor
+    spr(0,p.cursor.items.x-10,p.cursor.items.y-1)
+end
+
+function transaction_update()
+    if (btnp(0)) and p.cursor.items.pos > 3 then
+        p.cursor.items = items[i_menu_map[p.cursor.items.pos-3]]
+    end
+    if (btnp(1)) and p.cursor.items.pos <= 3 then
+        p.cursor.items = items[i_menu_map[p.cursor.items.pos+3]]
+    end
+    if (btnp(2)) and p.cursor.items.pos > 1 then
+        p.cursor.items = items[i_menu_map[p.cursor.items.pos-1]]
+    end
+    if (btnp(3)) and p.cursor.items.pos < 6 then
+        p.cursor.items = items[i_menu_map[p.cursor.items.pos+1]]
+    end
+    if (btnp(5)) then
+        show_final_transaction()
+    end
+    if (btnp(4)) then
+        p.cursor.items = items["artifacts"] -- back to baseline
+        show_bsl()
+    end
+end
+
+function show_final_transaction()
+    scrn.drw = final_trans_draw
+    scrn.upd = final_trans_update
+end
+
+function final_trans_draw()
+    draw_inventory(7)
+    draw_stash(7)
+    
+    print("how many "..p.cursor.items.disp.." do you",item_coords.base_x-3, item_coords.base_y, 7)
+    print("want to "..p.cursor.bsl.title.."?",item_coords.base_x-3, item_coords.base_y+7, 7)
+
+    -- middle of the road amount
+    if p.cursor.bsl.title == "buy" then
+        --TODO: big todo here to show proper amount and account for capacity
+        trans_menu["middle"].amt = flr((p.money/p.cursor.items.curr)/2)
+        print(trans_menu["middle"].amt, trans_menu["middle"].x, trans_menu.y)
+        trans_menu["all"].amt = flr(p.money/p.cursor.items.curr)
+        print("all("..trans_menu["all"].amt..")", trans_menu["all"].x, trans_menu.y)
+        print("custom", trans_menu["cust"].x, trans_menu.y)
+    end
+
+    rect(0,nav_coords.base_y-10,127,127,7)
+    
+    -- player cursor
+    spr(0,p.cursor.trans.x-10, trans_menu.y-1)
+end
+
+function final_trans_update()
+    if (btnp(0)) and p.cursor.trans.pos > 1 then
+        p.cursor.trans = trans_menu[trans_map[p.cursor.trans.pos-1]]
+    end
+    if (btnp(1)) and p.cursor.trans.pos < 3 then
+        p.cursor.trans = trans_menu[trans_map[p.cursor.trans.pos+1]]
+    end
+    if (btnp(5)) then
+        show_adjust_amt()
+    end
+    if(btnp(4)) then
+        show_transaction()
+    end
+end
+
+function show_adjust_amt()
+end
+
+
+item_coords = {
+    base_x = 12,
+    base_y = 82,
     y_off = 7,
     x_off = 53
+}
+
+-- indexes match the 'pos' field in the items table
+i_menu_map = {
+    "artifacts",
+    "wands",
+    "armor",
+    "weapons",
+    "scrolls",
+    "potions"
 }
 
 items = {
@@ -275,7 +458,8 @@ items = {
         y=item_coords.base_y,
         low=1500,
         high=3000,
-        curr=0
+        curr=0,
+        pos=1
     },
     wands={
         disp="wands",
@@ -283,7 +467,8 @@ items = {
         y=item_coords.base_y+item_coords.y_off,
         low=500,
         high=1400,
-        curr=0
+        curr=0,
+        pos=2
     },
     armor={
         disp="armor",
@@ -291,54 +476,57 @@ items = {
         y=item_coords.base_y+item_coords.y_off*2,
         low=100,
         high=450,
-        curr=0
+        curr=0,
+        pos=3
     },
     weapons={
         disp="weapons",
-        x=item_coords.base_x+item_coords.x_off+22,
+        x=item_coords.base_x+item_coords.x_off+18,
         y=item_coords.base_y,
         low=30,
         high=90,
-        curr=0
+        curr=0,
+        pos=4
     },
     scrolls={
         disp="scrolls",
-        x=item_coords.base_x+item_coords.x_off+22,
+        x=item_coords.base_x+item_coords.x_off+18,
         y=item_coords.base_y+item_coords.y_off,
         low=7,
         high=25,
-        curr=0
+        curr=0,
+        pos=5
     },
     potions={
         disp="potions",
-        x=item_coords.base_x+item_coords.x_off+22,
+        x=item_coords.base_x+item_coords.x_off+18,
         y=item_coords.base_y+item_coords.y_off*2,
         low=1,
         high=6,
-        curr=0
+        curr=0,
+        pos=6
     }
 }
 
 function draw_prices(c)
-    print(items.artifacts.disp, items.artifacts.x, items.artifacts.y)
-    print(items.artifacts.curr, item_coords.x_off-5, items.artifacts.y)
+    -- items
+    print(items.artifacts.disp, items.artifacts.x, items.artifacts.y,c)
+    print(items.artifacts.curr, item_coords.x_off, items.artifacts.y,c)
 
-    print(items.wands.disp, items.wands.x, items.wands.y)
-    print(items.wands.curr, item_coords.x_off-5, items.wands.y)
+    print(items.wands.disp, items.wands.x, items.wands.y,c)
+    print(items.wands.curr, item_coords.x_off, items.wands.y,c)
 
-    print(items.armor.disp, items.armor.x, items.armor.y)
-    print(items.armor.curr, item_coords.x_off-5, items.armor.y)
+    print(items.armor.disp, items.armor.x, items.armor.y,c)
+    print(items.armor.curr, item_coords.x_off, items.armor.y,c)
 
-    print(items.weapons.disp, items.weapons.x, items.weapons.y)
-    print(items.weapons.curr, (item_coords.x_off*2)+8, items.weapons.y)
+    print(items.weapons.disp, items.weapons.x, items.weapons.y,c)
+    print(items.weapons.curr, (item_coords.x_off*2)+10, items.weapons.y,c)
 
-    print(items.scrolls.disp, items.scrolls.x, items.scrolls.y)
-    print(items.scrolls.curr, (item_coords.x_off*2)+8, items.scrolls.y)
+    print(items.scrolls.disp, items.scrolls.x, items.scrolls.y,c)
+    print(items.scrolls.curr, (item_coords.x_off*2)+10, items.scrolls.y,c)
 
-    print(items.potions.disp, items.potions.x, items.potions.y)
-    print(items.potions.curr, (item_coords.x_off*2)+8, items.potions.y)
-
-    -- player cursor
+    print(items.potions.disp, items.potions.x, items.potions.y,c)
+    print(items.potions.curr, (item_coords.x_off*2)+10, items.potions.y,c)
 end
 
 
