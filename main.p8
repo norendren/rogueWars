@@ -3,16 +3,19 @@ version 18
 __lua__
 #include strings.p8
 
+-- legal buys
+-- item coloring based on money
+
 frame = 0
 scrn = {}
 
 function _init()
-    show_menu()
+    -- show_menu()
     -- show_intro()
-    -- show_navigation()print("current "..p.cursor.trans.pos, 0,0,7)
+    -- show_navigation()
     -- show_bsl()
     -- show_transaction()
-    -- show_final_transaction()
+    show_final_transaction()
 
     p.cursor.nav=nav_menu["gkh"]
     p.cursor.items = items["weapons"]
@@ -308,7 +311,7 @@ function bsl_draw()
     draw_inventory(7)
     draw_stash(7)
 
-    draw_prices(7)
+    draw_prices(7, true)
     draw_bsl(7)
 
     rect(0,nav_coords.base_y-10,127,127,7)
@@ -457,9 +460,6 @@ end
 function adjust_draw()
     draw_inventory(7)
     draw_stash(7)
-
-    print("current "..p.cursor.trans.pos, 0,0,7)
-    print("current "..p.cursor.trans.amt, 0,7,7)
     
     print("adjust final amount?",item_coords.base_x-3, item_coords.base_y, 7)
     print("⬆️⬇️ = 1",item_coords.base_x-3, item_coords.base_y+7, 7)
@@ -471,9 +471,22 @@ function adjust_draw()
 end
 
 function adjust_update()
+    -- switch this shit to use the inflight transaction
     if(btnp(0)) and p.cursor.trans.amt > 5 then p.cursor.trans.amt-=5 end
-    if(btnp(1)) then p.cursor.trans.amt+=5 end
-    if(btnp(2)) then p.cursor.trans.amt+=1 end
+    if(btnp(1)) then 
+        if p.cursor.trans.amt + 5 > trans_menu.all.amt then
+            p.cursor.trans.amt = trans_menu.all.amt
+        else
+            p.cursor.trans.amt+=5 
+        end
+    end
+    if(btnp(2)) then 
+        if p.cursor.trans.amt + 1 > trans_menu.all.amt then
+            p.cursor.trans.amt = trans_menu.all.amt
+        else
+            p.cursor.trans.amt+=1 
+        end
+    end
     if(btnp(3)) and p.cursor.trans.amt > 1 then p.cursor.trans.amt-=1 end
 
     if(btnp(4)) then show_final_transaction() end
@@ -560,27 +573,57 @@ items = {
     }
 }
 
-function draw_prices(c)
-    -- items
-    print(items.artifacts.disp, items.artifacts.x, items.artifacts.y,c)
-    print(items.artifacts.curr, item_coords.x_off, items.artifacts.y,c)
+function draw_prices(c, money_check)
+    money_check = money_check or false
 
-    print(items.wands.disp, items.wands.x, items.wands.y,c)
-    print(items.wands.curr, item_coords.x_off, items.wands.y,c)
+    if p.money/items.artifacts.curr < 1 then
+        print(items.artifacts.disp, items.artifacts.x, items.artifacts.y,8)
+        print(items.artifacts.curr, item_coords.x_off, items.artifacts.y,8)
+    else
+        print(items.artifacts.disp, items.artifacts.x, items.artifacts.y,c)
+        print(items.artifacts.curr, item_coords.x_off, items.artifacts.y,c)
+    end
 
-    print(items.armor.disp, items.armor.x, items.armor.y,c)
-    print(items.armor.curr, item_coords.x_off, items.armor.y,c)
+    if p.money/items.wands.curr < 1 then
+        print(items.wands.disp, items.wands.x, items.wands.y,8)
+        print(items.wands.curr, item_coords.x_off, items.wands.y,8)
+    else
+        print(items.wands.disp, items.wands.x, items.wands.y,c)
+        print(items.wands.curr, item_coords.x_off, items.wands.y,c)
+    end
 
-    print(items.weapons.disp, items.weapons.x, items.weapons.y,c)
-    print(items.weapons.curr, (item_coords.x_off*2)+10, items.weapons.y,c)
+    if p.money/items.armor.curr < 1 then
+        print(items.armor.disp, items.armor.x, items.armor.y,8)
+        print(items.armor.curr, item_coords.x_off, items.armor.y,8)
+    else
+        print(items.armor.disp, items.armor.x, items.armor.y,c)
+        print(items.armor.curr, item_coords.x_off, items.armor.y,c)
+    end
 
-    print(items.scrolls.disp, items.scrolls.x, items.scrolls.y,c)
-    print(items.scrolls.curr, (item_coords.x_off*2)+10, items.scrolls.y,c)
+    if p.money/items.weapons.curr < 1 then    
+        print(items.weapons.disp, items.weapons.x, items.weapons.y,8)
+        print(items.weapons.curr, (item_coords.x_off*2)+10, items.weapons.y,8)
+    else
+        print(items.weapons.disp, items.weapons.x, items.weapons.y,c)
+        print(items.weapons.curr, (item_coords.x_off*2)+10, items.weapons.y,c)
+    end
 
-    print(items.potions.disp, items.potions.x, items.potions.y,c)
-    print(items.potions.curr, (item_coords.x_off*2)+10, items.potions.y,c)
+    if p.money/items.scrolls.curr < 1 then    
+        print(items.scrolls.disp, items.scrolls.x, items.scrolls.y,8)
+        print(items.scrolls.curr, (item_coords.x_off*2)+10, items.scrolls.y,8)
+    else
+        print(items.scrolls.disp, items.scrolls.x, items.scrolls.y,c)
+        print(items.scrolls.curr, (item_coords.x_off*2)+10, items.scrolls.y,c)
+    end
+
+    if p.money/items.potions.curr < 1 then    
+        print(items.potions.disp, items.potions.x, items.potions.y,8)
+        print(items.potions.curr, (item_coords.x_off*2)+10, items.potions.y,8)
+    else
+        print(items.potions.disp, items.potions.x, items.potions.y,c)
+        print(items.potions.curr, (item_coords.x_off*2)+10, items.potions.y,c)
+    end
 end
-
 
 __gfx__
 0000000000005000000440004ffffff4000440006000000600000ccc000b000000888000000cc000000000000000000000000000000000000000000000000000
