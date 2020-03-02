@@ -7,12 +7,12 @@ frame = 0
 scrn = {}
 
 function _init()
-    -- show_menu()
+    show_menu()
     -- show_intro()
-    -- show_navigation()
+    -- show_navigation()print("current "..p.cursor.trans.pos, 0,0,7)
     -- show_bsl()
     -- show_transaction()
-    show_final_transaction()
+    -- show_final_transaction()
 
     p.cursor.nav=nav_menu["gkh"]
     p.cursor.items = items["weapons"]
@@ -188,7 +188,7 @@ trans_menu = {
         pos=2
     },
     cust={
-        amt="custom",
+        amt=0,
         x=90,
         pos=3
     }
@@ -204,13 +204,13 @@ p = {
     },
     cursor={
         nav={},
-        item={},
+        items={},
         bsl={},
         trans={}
     },
     inventory={{disp="artifacts",amt=0},
     {disp="wands",amt=0},
-    {disp="armor",amt=0},
+    {disp="armor",amt=30},
     {disp="weapons",amt=0},
     {disp="scrolls",amt=0},
     {disp="potions",amt=0}},
@@ -260,10 +260,11 @@ function draw_inventory(c)
     rect(
         inv_coords.base_x-5,
         inv_coords.base_y-16,
-        (inv_coords.base_x-5)+inv_coords.x_off+13,
+        127,
         70,
         c)
 
+    print("$ "..p.money, inv_coords.base_x-4, 5, c)
     print("inventory", inv_coords.base_x+3, inv_coords.base_y-12, c)
     x = inv_coords.base_x
     y = inv_coords.base_y
@@ -336,7 +337,9 @@ end
 
 function draw_bsl(c)
     for k,v in pairs(bsl) do
-        print(v.title,v.x,bsl.y,c)
+        if k != "y" then -- silly of me to put the y value in there
+            print(v.title,v.x,bsl.y,c)
+        end
     end
 end
 
@@ -401,6 +404,7 @@ function final_trans_draw()
 
     -- middle of the road amount
     if p.cursor.bsl.title == "buy" then
+        p.inf_trans.buying = true
         --TODO: big todo here to show proper amount and account for capacity
         trans_menu["middle"].amt = flr((p.money/p.cursor.items.curr)/2)
         print(trans_menu["middle"].amt, trans_menu["middle"].x, trans_menu.y)
@@ -408,6 +412,7 @@ function final_trans_draw()
         print("all("..trans_menu["all"].amt..")", trans_menu["all"].x, trans_menu.y)
         print("custom", trans_menu["cust"].x, trans_menu.y)
     end
+    -- selling
 
     rect(0,nav_coords.base_y-10,127,127,7)
     
@@ -430,9 +435,56 @@ function final_trans_update()
     end
 end
 
-function show_adjust_amt()
+-- semi helpful debugger
+function show_shit()
+    scrn.upd = function()
+    end
+
+    scrn.drw = function()
+        cursor(0)
+        color(7)
+        for k,v in pairs(bsl) do
+            print(k)
+        end
+    end
 end
 
+function show_adjust_amt()
+    scrn.upd = adjust_update
+    scrn.drw = adjust_draw
+end
+
+function adjust_draw()
+    draw_inventory(7)
+    draw_stash(7)
+
+    print("current "..p.cursor.trans.pos, 0,0,7)
+    print("current "..p.cursor.trans.amt, 0,7,7)
+    
+    print("adjust final amount?",item_coords.base_x-3, item_coords.base_y, 7)
+    print("⬆️⬇️ = 1",item_coords.base_x-3, item_coords.base_y+7, 7)
+    print("⬅️➡️ = 5",item_coords.base_x-3, item_coords.base_y+14, 7)
+
+    print(p.cursor.trans.amt, 62, trans_menu.y, 7)
+
+    rect(0,nav_coords.base_y-10,127,127,7)
+end
+
+function adjust_update()
+    if(btnp(0)) and p.cursor.trans.amt > 5 then p.cursor.trans.amt-=5 end
+    if(btnp(1)) then p.cursor.trans.amt+=5 end
+    if(btnp(2)) then p.cursor.trans.amt+=1 end
+    if(btnp(3)) and p.cursor.trans.amt > 1 then p.cursor.trans.amt-=1 end
+
+    if(btnp(4)) then show_final_transaction() end
+
+    if(btnp(5)) then
+        --fix all the math here for maxes and negatives
+        p.money -= p.cursor.trans.amt*p.cursor.items.curr
+        p.inventory[p.cursor.items.pos].amt += p.cursor.trans.amt
+        show_bsl()
+    end
+end
 
 item_coords = {
     base_x = 12,
