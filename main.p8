@@ -3,9 +3,6 @@ version 18
 __lua__
 #include strings.p8
 
--- legal buys
--- item coloring based on money
-
 frame = 0
 scrn = {}
 
@@ -13,16 +10,24 @@ function _init()
     -- show_menu()
     -- show_intro()
     -- show_navigation()
-    -- show_bsl()
+    show_bsl()
     -- show_transaction()
-    show_final_transaction()
+    -- show_final_transaction()
 
-    p.cursor.nav=nav_menu["gkh"]
-    p.cursor.items = items["weapons"]
+    p.cursor.nav=nav_menu["adom"]
+    p.cursor.items = items["artifacts"]
     p.cursor.bsl=bsl["buy"]
     p.cursor.trans=trans_menu["middle"]
 
+    calc_inventory()
     randomize_prices()
+end
+
+function calc_inventory()
+    p.inv.current = 0
+    for i=1,#p.inventory do
+        p.inv.current+=p.inventory[i].amt
+    end
 end
 
 function randomize_prices()
@@ -94,23 +99,23 @@ bottom_half_y=85
 nav_coords = {
     base_x=20,
     base_y=bottom_half_y,
-    x_off = 55,
+    x_off = 50,
     y_off = 8
 }
-nav_map = {"gkh","cog","net","brogue","dcss","adom"}
+nav_map = {"adom","dcss","net","brogue","cog","gkh"}
 nav_menu = {
-    gkh={
-        title="gkh",
+    adom={
+        title="adom",
         x=nav_coords.base_x,
         y=nav_coords.base_y,
-        c=10,
+        c=2,
         pos=1
     },
-    cog={
-        title="cogmind", 
+    dcss={
+        title="dcss",
         x=nav_coords.base_x,
         y=nav_coords.base_y+nav_coords.y_off,
-        c=11,
+        c=9,
         pos=2
     },
     net={
@@ -127,18 +132,18 @@ nav_menu = {
         c=4,
         pos=4
     },
-    dcss={
-        title="dcss",
+    cog={
+        title="cogmind", 
         x=nav_coords.base_x+nav_coords.x_off,
         y=nav_coords.base_y+nav_coords.y_off,
-        c=9,
+        c=11,
         pos=5
     },
-    adom={
-        title="adom",
+    gkh={
+        title="golden krone",
         x=nav_coords.base_x+nav_coords.x_off,
         y=nav_coords.base_y+nav_coords.y_off*2,
-        c=2,
+        c=10,
         pos=6
     }
 }
@@ -199,11 +204,15 @@ trans_menu = {
 
 -- player data
 p = {
-    money=5000,
+    inv={
+        capacity=50,
+        current=0
+    },
+    money=200,
     inf_trans ={
         buying=false,
         selling=false,
-        curr_amt=0
+        amt=0
     },
     cursor={
         nav={},
@@ -213,7 +222,7 @@ p = {
     },
     inventory={{disp="artifacts",amt=0},
     {disp="wands",amt=0},
-    {disp="armor",amt=30},
+    {disp="armor",amt=0},
     {disp="weapons",amt=0},
     {disp="scrolls",amt=0},
     {disp="potions",amt=0}},
@@ -240,7 +249,6 @@ function nav_update()
         p.cursor.nav = nav_menu[nav_map[p.cursor.nav.pos+1]]
     end
     if (btnp(5)) then
-        p.cursor.nav = nav_menu["gkh"] -- back to baseline
         show_bsl()
     end
 end
@@ -255,20 +263,16 @@ function nav_draw()
     -- dungeon selection
     draw_dungeon_selection(7)
 
+    draw_rects(p.cursor.nav.c)
+
     -- player cursor
     spr(0,p.cursor.nav.x-10,p.cursor.nav.y-1)
 end
 
 function draw_inventory(c)
-    rect(
-        inv_coords.base_x-5,
-        inv_coords.base_y-16,
-        127,
-        70,
-        c)
-
     print("$ "..p.money, inv_coords.base_x-4, 5, c)
-    print("inventory", inv_coords.base_x+3, inv_coords.base_y-12, c)
+    print("bag", inv_coords.base_x+3, inv_coords.base_y-12, c)
+    print(p.inv.current.." / "..p.inv.capacity, inv_coords.base_x+20, inv_coords.base_y-12, c)
     x = inv_coords.base_x
     y = inv_coords.base_y
     for i=1,#p.inventory do
@@ -279,12 +283,6 @@ function draw_inventory(c)
 end
 
 function draw_stash(c)
-    rect(
-        stash_coords.base_x-5,
-        stash_coords.base_y-16,
-        (stash_coords.base_x-5)+stash_coords.x_off+13,
-        70,
-        7)
     print("stash", stash_coords.base_x+3, stash_coords.base_y-12, 7)
     x = stash_coords.base_x
     y = stash_coords.base_y
@@ -299,7 +297,6 @@ function draw_dungeon_selection(c)
     for k,rog in pairs(nav_menu) do
         print(rog.title, rog.x,rog.y,rog.c)
     end
-    rect(0,nav_coords.base_y-10,127,127,7)
 end
 
 function show_bsl()
@@ -311,11 +308,10 @@ function bsl_draw()
     draw_inventory(7)
     draw_stash(7)
 
-    draw_prices(7, true)
+    draw_prices(7)
     draw_bsl(7)
 
-    rect(0,nav_coords.base_y-10,127,127,7)
-    
+    draw_rects(p.cursor.nav.c)
     -- player cursor
     spr(0,p.cursor.bsl.x-10, bsl.y-1)
 end
@@ -352,20 +348,24 @@ function show_transaction()
 end
 
 function transaction_draw()
+    draw_rects(p.cursor.nav.c)
     draw_inventory(7)
     draw_stash(7)
 
-    draw_prices(7)
+    if p.cursor.bsl.title == "buy" then
+        draw_prices(7, true)
+    else
+        draw_prices(7)
+    end
     draw_bsl(7)
 
+    -- indicator for buy/sell mode
     rect(
         p.cursor.bsl.x-3,
         bsl.y-3,
         (p.cursor.bsl.x-3)+#p.cursor.bsl.title*5.5,
         (bsl.y-3) + 10,
         7)
-
-    rect(0,nav_coords.base_y-10,127,127,7)
     
     -- player cursor
     spr(0,p.cursor.items.x-10,p.cursor.items.y-1)
@@ -408,17 +408,16 @@ function final_trans_draw()
     -- middle of the road amount
     if p.cursor.bsl.title == "buy" then
         p.inf_trans.buying = true
-        --TODO: big todo here to show proper amount and account for capacity
-        trans_menu["middle"].amt = flr((p.money/p.cursor.items.curr)/2)
-        print(trans_menu["middle"].amt, trans_menu["middle"].x, trans_menu.y)
-        trans_menu["all"].amt = flr(p.money/p.cursor.items.curr)
-        print("all("..trans_menu["all"].amt..")", trans_menu["all"].x, trans_menu.y)
-        print("custom", trans_menu["cust"].x, trans_menu.y)
+        trans_menu["middle"].amt, trans_menu["all"].amt = calc_trans_buy()
+    else
+        p.inf_trans.selling = true
+        trans_menu["middle"].amt, trans_menu["all"].amt = calc_trans_sell()
     end
-    -- selling
+    print(trans_menu["middle"].amt, trans_menu["middle"].x, trans_menu.y)
+    print("all("..trans_menu["all"].amt..")", trans_menu["all"].x, trans_menu.y)
+    print("custom", trans_menu["cust"].x, trans_menu.y)
 
-    rect(0,nav_coords.base_y-10,127,127,7)
-    
+    draw_rects(p.cursor.nav.c)
     -- player cursor
     spr(0,p.cursor.trans.x-10, trans_menu.y-1)
 end
@@ -431,11 +430,40 @@ function final_trans_update()
         p.cursor.trans = trans_menu[trans_map[p.cursor.trans.pos+1]]
     end
     if (btnp(5)) then
+        p.inf_trans.amt = p.cursor.trans.amt
         show_adjust_amt()
     end
     if(btnp(4)) then
+        p.inf_trans.buying = false
+        p.inf_trans.selling = false
         show_transaction()
     end
+end
+
+function calc_trans_buy()
+    local mid = flr((p.money/p.cursor.items.curr)/2)
+    local all = flr(p.money/p.cursor.items.curr)
+
+    local remaining_space = p.inv.capacity - p.inv.current
+
+    if mid > remaining_space then
+        if p.inv.capacity == p.inv.current then
+            mid = 0
+        else
+            mid = flr(remaining_space/2)
+        end
+    end
+    if all > remaining_space then
+        all = p.inv.capacity - p.inv.current
+    end
+    return mid,all
+end
+
+function calc_trans_sell()
+    local mid = flr(p.inventory[p.cursor.items.pos].amt/2)
+    local all = p.inventory[p.cursor.items.pos].amt
+
+    return mid, all
 end
 
 -- semi helpful debugger
@@ -458,6 +486,7 @@ function show_adjust_amt()
 end
 
 function adjust_draw()
+    draw_rects(p.cursor.nav.c)
     draw_inventory(7)
     draw_stash(7)
     
@@ -465,36 +494,48 @@ function adjust_draw()
     print("⬆️⬇️ = 1",item_coords.base_x-3, item_coords.base_y+7, 7)
     print("⬅️➡️ = 5",item_coords.base_x-3, item_coords.base_y+14, 7)
 
-    print(p.cursor.trans.amt, 62, trans_menu.y, 7)
-
-    rect(0,nav_coords.base_y-10,127,127,7)
+    print(p.inf_trans.amt, 62, trans_menu.y, 7)
 end
 
 function adjust_update()
     -- switch this shit to use the inflight transaction
-    if(btnp(0)) and p.cursor.trans.amt > 5 then p.cursor.trans.amt-=5 end
+    if(btnp(0)) and p.inf_trans.amt > 1 then 
+        if p.inf_trans.amt-5 < 0 then
+            p.inf_trans.amt=0
+        else     
+            p.inf_trans.amt-=5 
+        end
+    end
     if(btnp(1)) then 
-        if p.cursor.trans.amt + 5 > trans_menu.all.amt then
-            p.cursor.trans.amt = trans_menu.all.amt
+        if p.inf_trans.amt + 5 > trans_menu.all.amt then
+            p.inf_trans.amt = trans_menu.all.amt
         else
-            p.cursor.trans.amt+=5 
+            p.inf_trans.amt+=5 
         end
     end
     if(btnp(2)) then 
-        if p.cursor.trans.amt + 1 > trans_menu.all.amt then
-            p.cursor.trans.amt = trans_menu.all.amt
+        if p.inf_trans.amt + 1 > trans_menu.all.amt then
+            p.inf_trans.amt = trans_menu.all.amt
         else
-            p.cursor.trans.amt+=1 
+            p.inf_trans.amt+=1 
         end
     end
-    if(btnp(3)) and p.cursor.trans.amt > 1 then p.cursor.trans.amt-=1 end
+    if(btnp(3)) and p.inf_trans.amt > 1 then p.inf_trans.amt-=1 end
 
     if(btnp(4)) then show_final_transaction() end
 
     if(btnp(5)) then
-        --fix all the math here for maxes and negatives
-        p.money -= p.cursor.trans.amt*p.cursor.items.curr
-        p.inventory[p.cursor.items.pos].amt += p.cursor.trans.amt
+        if p.inf_trans.buying then
+            --fix all the math here for maxes and negatives
+            p.money -= p.inf_trans.amt*p.cursor.items.curr
+            p.inventory[p.cursor.items.pos].amt += p.inf_trans.amt
+        else
+            p.money += p.cursor.items.curr*p.inf_trans.amt
+            p.inventory[p.cursor.items.pos].amt -= p.inf_trans.amt
+        end
+        p.inf_trans.buying = false
+        p.inf_trans.selling = false
+        calc_inventory()
         show_bsl()
     end
 end
@@ -573,10 +614,22 @@ items = {
     }
 }
 
+function draw_rects(c)
+    -- inventory
+    rect(67,12,127,70,c)
+    
+    -- stash
+    rect(0,12,60,70,c)
+    
+    -- bottom half
+    rect(0,75,127,127,c)
+end
+
 function draw_prices(c, money_check)
+    -- todo: implement highlighting for inventory space
     money_check = money_check or false
 
-    if p.money/items.artifacts.curr < 1 then
+    if p.money/items.artifacts.curr < 1 and money_check then
         print(items.artifacts.disp, items.artifacts.x, items.artifacts.y,8)
         print(items.artifacts.curr, item_coords.x_off, items.artifacts.y,8)
     else
@@ -584,7 +637,7 @@ function draw_prices(c, money_check)
         print(items.artifacts.curr, item_coords.x_off, items.artifacts.y,c)
     end
 
-    if p.money/items.wands.curr < 1 then
+    if p.money/items.wands.curr < 1 and money_check then
         print(items.wands.disp, items.wands.x, items.wands.y,8)
         print(items.wands.curr, item_coords.x_off, items.wands.y,8)
     else
@@ -592,7 +645,7 @@ function draw_prices(c, money_check)
         print(items.wands.curr, item_coords.x_off, items.wands.y,c)
     end
 
-    if p.money/items.armor.curr < 1 then
+    if p.money/items.armor.curr < 1 and money_check then
         print(items.armor.disp, items.armor.x, items.armor.y,8)
         print(items.armor.curr, item_coords.x_off, items.armor.y,8)
     else
@@ -600,7 +653,7 @@ function draw_prices(c, money_check)
         print(items.armor.curr, item_coords.x_off, items.armor.y,c)
     end
 
-    if p.money/items.weapons.curr < 1 then    
+    if p.money/items.weapons.curr < 1 and money_check then    
         print(items.weapons.disp, items.weapons.x, items.weapons.y,8)
         print(items.weapons.curr, (item_coords.x_off*2)+10, items.weapons.y,8)
     else
@@ -608,7 +661,7 @@ function draw_prices(c, money_check)
         print(items.weapons.curr, (item_coords.x_off*2)+10, items.weapons.y,c)
     end
 
-    if p.money/items.scrolls.curr < 1 then    
+    if p.money/items.scrolls.curr < 1 and money_check then    
         print(items.scrolls.disp, items.scrolls.x, items.scrolls.y,8)
         print(items.scrolls.curr, (item_coords.x_off*2)+10, items.scrolls.y,8)
     else
@@ -616,7 +669,7 @@ function draw_prices(c, money_check)
         print(items.scrolls.curr, (item_coords.x_off*2)+10, items.scrolls.y,c)
     end
 
-    if p.money/items.potions.curr < 1 then    
+    if p.money/items.potions.curr < 1 and money_check then    
         print(items.potions.disp, items.potions.x, items.potions.y,8)
         print(items.potions.curr, (item_coords.x_off*2)+10, items.potions.y,8)
     else
@@ -626,11 +679,11 @@ function draw_prices(c, money_check)
 end
 
 __gfx__
-0000000000005000000440004ffffff4000440006000000600000ccc000b000000888000000cc000000000000000000000000000000000000000000000000000
-00a0000005555555004444000f00f0f00074470006000060000000cc00bbb00000888000000cc000000000000000000000000000000000000000000000000000
-00a6666005ccccc5044444400ffffff0077887700060060000004a0c0bbbbb00008880000004a000000000000000000000000000000000000000000000000000
-44a66666055ccc55444554440f0000f077788777000660000004a400bbbbbbb000888000000a4000000000000000000000000000000000000000000000000000
-00a66660005ccc50444554440ffffff0788888870a0660a0004a400000bbb000888888800004a000000000000000000000000000000000000000000000000000
-00a000000055c550044444400f0f00f07778877700a00a0004a4000000bbb00008888800000a4000000000000000000000000000000000000000000000000000
-000000000005c500004444000ffffff077788777040aa0404a40000000bbb000008880000004a000000000000000000000000000000000000000000000000000
-0000000000055500000440004ffffff40777777040000004a400000000bbb00000080000000a4000000000000000000000000000000000000000000000000000
+0000000000005000000440004ffffff4000440006000000600000ccc000b000000888000000cc000000400000000000000000000000000000000000000000000
+00a0000005555555004444000f00f0f00074470006000060000000cc00bbb00000888000000cc000004440000000000000000000000000000000000000000000
+00a6666005ccccc5044444400ffffff0077887700060060000004a0c0bbbbb00008880000004a000044444000000000000000000000000000000000000000000
+44a66666055ccc55444554440f0000f077788777000660000004a400bbbbbbb000888000000a4000444444400000000000000000000000000000000000000000
+00a66660005ccc50444554440ffffff0788888870a0660a0004a400000bbb000888888800004a0000fffff000000000000000000000000000000000000000000
+00a000000055c550044444400f0f00f07778877700a00a0004a4000000bbb00008888800000a40000fcfff000000000000000000000000000000000000000000
+000000000005c500004444000ffffff077788777040aa0404a40000000bbb000008880000004a0000fff4f000000000000000000000000000000000000000000
+0000000000055500000440004ffffff40777777040000004a400000000bbb00000080000000a40000fff4f000000000000000000000000000000000000000000
