@@ -3,21 +3,35 @@ version 18
 __lua__
 #include strings.p8
 
+--[[
+    loan system?
+    encounters
+    items
+    name character or something? home roguelike
+    refactor, token opt
+    game over screen
+    pretty up intro screen and get scrolling text  
+]]
+
 frame = 0
 scrn = {}
+
+aut = 30
+
+draw_inv_stash = false
 
 function _init()
     -- show_menu()
     -- show_intro()
     -- show_navigation()
-    show_bsl()
+    -- show_bsl()
     -- show_transaction()
-    -- show_final_transaction()
+    show_final_transaction()
 
-    p.cursor.nav=nav_menu["adom"]
-    p.cursor.items = items["artifacts"]
-    p.cursor.bsl=bsl["buy"]
-    p.cursor.trans=trans_menu["middle"]
+    p.cursor.nav=nav_menu.adom
+    p.cursor.items = items.artifacts
+    p.cursor.bsl=bsl.buy
+    p.cursor.trans=trans_menu.middle
 
     calc_inventory()
     randomize_prices()
@@ -40,19 +54,36 @@ function _update()
     scrn.upd()
 end
 
+function hcenter(s)
+    return 64-#s*2
+end
+
 function _draw()
     cls()
-    -- rect(0,0,127,127,14)
+    if draw_inv_stash then
+        draw_rects(p.cursor.nav.c)
+        local a = aut.." aut"
+        print(a,hcenter(a),2,7)
+        print("icebox", 2, 2, 7)
+        print("(5hp)", 28, 2, 7)
+
+        draw_inventory(7)
+        draw_stash(7)
+    end
+    rect(0,0,127,127,14)
     scrn.drw()
+    frame += 1
+    frame = frame%20
 end
 
 function show_menu()
+    draw_inv_stash = false
     scrn.upd = menu_update
     scrn.drw = menu_draw
 end
 
 function menu_update()
-    if (btnp(4)) then
+    if (btnp(5)) then
         show_intro()
     end
 end
@@ -61,14 +92,13 @@ function menu_draw()
     print("shopkeeprl", 40, 20, 7)
 
     if frame < 10 then
-        print("press z to start", 30, 100, 7)
+        print("press x to start", 30, 100, 7)
     end
-    frame += 1
-    frame = frame%20
 end
 
 function show_intro()
     -- todo: create intro texts-- if (btnp(5)) then
+    draw_inv_stash = false
         
     -- end that show only once for each roguelike
     scrn.upd = intro_update
@@ -76,7 +106,7 @@ function show_intro()
 end
 
 function intro_update()
-    if (btnp(4)) then
+    if (btnp(5)) then
         show_navigation()
     end
 end
@@ -84,22 +114,23 @@ end
 function intro_draw()
     -- todo: add help text and home roguelike
     long_printer(intro, 0, 7)
-    print("press z to play", 30, 100, 7)
+    print("press x to play", 30, 100, 7)
 end
 
 function show_navigation()
+    draw_inv_stash = true
     scrn.upd = nav_update
     scrn.drw = nav_draw
 end
 
 -- locking y values for top and bottom half
-top_half_y=28
-bottom_half_y=85
+top_half_y=25
+bottom_half_y=90
 
 nav_coords = {
     base_x=20,
     base_y=bottom_half_y,
-    x_off = 50,
+    x_off = 55,
     y_off = 8
 }
 nav_map = {"adom","dcss","net","brogue","cog","gkh"}
@@ -161,10 +192,9 @@ stash_coords = {
     y_off = 7
 }
 
--- trying hardcoded explicit cuz sheesh
 bsl_map = {"buy","sell","leave"}
 bsl = {
-    y=112,
+    y=115,
     buy={
         title="buy",
         x=27,
@@ -205,10 +235,11 @@ trans_menu = {
 -- player data
 p = {
     inv={
+        affix="",
+        c=7,
         capacity=50,
         current=0
     },
-    money=200,
     inf_trans ={
         buying=false,
         selling=false,
@@ -234,49 +265,103 @@ p = {
     {disp="scrolls",amt=0},
     {disp="potions",amt=0}}
 }
+money = {
+    ones=500,
+    thousands=0,
+    buy=function(self, amt, price)
+        for i=1,amt do
+            self.ones -= price
+            if self.ones < 0 then
+                self.thousands -= abs(flr(self.ones/1000))
+                self.ones = abs(self.ones % 1000)
+            end
+        end
+    end,
+    sell=function(self, amt, price)
+        for i=1,amt do
+            self.ones += price
+            if flr(self.ones/1000) > 0 then
+                self.thousands += flr(self.ones/1000)
+                self.ones = self.ones % 1000
+            end
+        end
+    end,
+    afford=function(self, price)
+        local have_money = false
+        if self.ones > 0 or self.thousands > 0 then
+            have_money = true
+        else
+            return 0
+        end
+
+        local amt = 0
+        local ones = self.ones
+        local thousands = self.thousands
+        
+        while have_money do
+            ones -= price
+            if ones <= 0 and thousands == 0 then
+                return amt
+            else
+                thousands -= abs(flr(ones/1000))
+                ones = abs(ones % 1000)
+                if thousands < 0 then
+                    return amt
+                end
+            end
+            amt += 1
+        end
+    end
+}
+
+function nav_draw()
+    -- dungeon selection
+    draw_dungeon_selection(7)
+
+    -- player cursor
+    spr(0,p.cursor.nav.x-10,p.cursor.nav.y-1)
+end
 
 function nav_update()
-    if (btnp(0)) and p.cursor.nav.pos > 3 then
-        p.cursor.nav = nav_menu[nav_map[p.cursor.nav.pos-3]]
+    local curs = p.cursor.nav.pos
+
+    if (btnp(0)) and curs > 3 then
+        p.cursor.nav = nav_menu[nav_map[curs-3]]
     end
-    if (btnp(1)) and p.cursor.nav.pos <= 3 then
-        p.cursor.nav = nav_menu[nav_map[p.cursor.nav.pos+3]]
+    if (btnp(1)) and curs <= 3 then
+        p.cursor.nav = nav_menu[nav_map[curs+3]]
     end
-    if (btnp(2)) and p.cursor.nav.pos > 1 then
-        p.cursor.nav = nav_menu[nav_map[p.cursor.nav.pos-1]]
+    if (btnp(2)) and curs > 1 then
+        p.cursor.nav = nav_menu[nav_map[curs-1]]
     end
-    if (btnp(3)) and p.cursor.nav.pos < 6 then
-        p.cursor.nav = nav_menu[nav_map[p.cursor.nav.pos+1]]
+    if (btnp(3)) and curs < 6 then
+        p.cursor.nav = nav_menu[nav_map[curs+1]]
     end
     if (btnp(5)) then
         show_bsl()
     end
 end
 
-function nav_draw()
-    -- player inventory
-    draw_inventory(7)
-
-    -- player stash
-    draw_stash(7)
-
-    -- dungeon selection
-    draw_dungeon_selection(7)
-
-    draw_rects(p.cursor.nav.c)
-
-    -- player cursor
-    spr(0,p.cursor.nav.x-10,p.cursor.nav.y-1)
-end
-
 function draw_inventory(c)
-    print("$ "..p.money, inv_coords.base_x-4, 5, c)
-    print("bag", inv_coords.base_x+3, inv_coords.base_y-12, c)
-    print(p.inv.current.." / "..p.inv.capacity, inv_coords.base_x+20, inv_coords.base_y-12, c)
+    if money.thousands == 0 then
+        print("$ "..money.ones, 92, 2, c)
+    else
+        print("$ "..money.thousands..money.ones, 92, 2, c)
+    end
+
+    if p.inv.affix == "" then
+        print("bag", inv_coords.base_x+1, inv_coords.base_y-12, p.inv.c)
+    else
+        print(p.inv.affix,inv_coords.base_x-3, inv_coords.base_y-14, p.inv.c)
+        print("bag", inv_coords.base_x+1, inv_coords.base_y-7, p.inv.c)
+    end
+    print(p.inv.current.." / "..p.inv.capacity, inv_coords.base_x+25, inv_coords.base_y-12, c)
     x = inv_coords.base_x
     y = inv_coords.base_y
     for i=1,#p.inventory do
         print(p.inventory[i].disp, x, y, c)
+        -- spr(p.inventory[i].s,x,y)
+        
         print(p.inventory[i].amt, x+inv_coords.x_off, y, c)
         y+= inv_coords.y_off
     end
@@ -288,7 +373,7 @@ function draw_stash(c)
     y = stash_coords.base_y
     for i=1,#p.inventory do
         print(p.stash[i].disp, x, y, 7)
-        print(p.stash[i].amt, x+inv_coords.x_off, y)
+        print(p.stash[i].amt, x+stash_coords.x_off, y)
         y+= stash_coords.y_off
     end
 end
@@ -300,32 +385,35 @@ function draw_dungeon_selection(c)
 end
 
 function show_bsl()
+    draw_inv_stash = true
     scrn.drw = bsl_draw
     scrn.upd = bsl_update
 end
 
 function bsl_draw()
-    draw_inventory(7)
-    draw_stash(7)
-
     draw_prices(7)
     draw_bsl(7)
 
-    draw_rects(p.cursor.nav.c)
     -- player cursor
     spr(0,p.cursor.bsl.x-10, bsl.y-1)
 end
 
 function bsl_update()
-    if (btnp(0)) and p.cursor.bsl.pos > 1 then
-        p.cursor.bsl = bsl[bsl_map[p.cursor.bsl.pos-1]]
+    local curs = p.cursor.bsl.pos
+
+    if (btnp(0)) and curs > 1 then
+        p.cursor.bsl = bsl[bsl_map[curs-1]]
     end
-    if (btnp(1)) and p.cursor.bsl.pos < 3 then
-        p.cursor.bsl = bsl[bsl_map[p.cursor.bsl.pos+1]]
+    if (btnp(1)) and curs < 3 then
+        p.cursor.bsl = bsl[bsl_map[curs+1]]
     end
     if (btnp(5)) then
         if p.cursor.bsl.title == "leave" then
-            p.cursor.bsl = bsl["buy"]
+            aut-=1
+            if aut == 0 then
+                -- show game over
+            end
+            p.cursor.bsl = bsl.buy
             randomize_prices()
             show_navigation() 
         else
@@ -343,15 +431,12 @@ function draw_bsl(c)
 end
 
 function show_transaction()
+    draw_inv_stash = true
     scrn.drw = transaction_draw
     scrn.upd = transaction_update
 end
 
 function transaction_draw()
-    draw_rects(p.cursor.nav.c)
-    draw_inventory(7)
-    draw_stash(7)
-
     if p.cursor.bsl.title == "buy" then
         draw_prices(7, true)
     else
@@ -372,62 +457,60 @@ function transaction_draw()
 end
 
 function transaction_update()
-    if (btnp(0)) and p.cursor.items.pos > 3 then
-        p.cursor.items = items[i_menu_map[p.cursor.items.pos-3]]
+    local curs = p.cursor.items.pos
+
+    if (btnp(0)) and curs > 3 then
+        p.cursor.items = items[i_menu_map[curs-3]]
     end
-    if (btnp(1)) and p.cursor.items.pos <= 3 then
-        p.cursor.items = items[i_menu_map[p.cursor.items.pos+3]]
+    if (btnp(1)) and curs <= 3 then
+        p.cursor.items = items[i_menu_map[curs+3]]
     end
-    if (btnp(2)) and p.cursor.items.pos > 1 then
-        p.cursor.items = items[i_menu_map[p.cursor.items.pos-1]]
+    if (btnp(2)) and curs > 1 then
+        p.cursor.items = items[i_menu_map[curs-1]]
     end
-    if (btnp(3)) and p.cursor.items.pos < 6 then
-        p.cursor.items = items[i_menu_map[p.cursor.items.pos+1]]
+    if (btnp(3)) and curs < 6 then
+        p.cursor.items = items[i_menu_map[curs+1]]
     end
     if (btnp(5)) then
         show_final_transaction()
     end
     if (btnp(4)) then
-        p.cursor.items = items["artifacts"] -- back to baseline
+        p.cursor.items = items.artifacts -- back to baseline
         show_bsl()
     end
 end
 
 function show_final_transaction()
+    draw_inv_stash = true
     scrn.drw = final_trans_draw
     scrn.upd = final_trans_update
 end
 
 function final_trans_draw()
-    draw_inventory(7)
-    draw_stash(7)
-    
-    print("how many "..p.cursor.items.disp.." do you",item_coords.base_x-3, item_coords.base_y, 7)
-    print("want to "..p.cursor.bsl.title.."?",item_coords.base_x-3, item_coords.base_y+7, 7)
+    print(p.cursor.bsl.title.."ing "..p.cursor.items.disp.." for "..p.cursor.items.curr,item_coords.base_x-3, item_coords.base_y, 7)
 
     -- middle of the road amount
     if p.cursor.bsl.title == "buy" then
         p.inf_trans.buying = true
-        trans_menu["middle"].amt, trans_menu["all"].amt = calc_trans_buy()
+        trans_menu.middle.amt, trans_menu.all.amt = calc_trans_buy()
     else
         p.inf_trans.selling = true
-        trans_menu["middle"].amt, trans_menu["all"].amt = calc_trans_sell()
+        trans_menu.middle.amt, trans_menu.all.amt = calc_trans_sell()
     end
-    print(trans_menu["middle"].amt, trans_menu["middle"].x, trans_menu.y)
-    print("all("..trans_menu["all"].amt..")", trans_menu["all"].x, trans_menu.y)
-    print("custom", trans_menu["cust"].x, trans_menu.y)
-
-    draw_rects(p.cursor.nav.c)
+    print(trans_menu.middle.amt, trans_menu.middle.x, trans_menu.y)
+    print("all("..trans_menu.all.amt..")", trans_menu.all.x, trans_menu.y)
+    print("custom", trans_menu.cust.x, trans_menu.y)
     -- player cursor
     spr(0,p.cursor.trans.x-10, trans_menu.y-1)
 end
 
 function final_trans_update()
-    if (btnp(0)) and p.cursor.trans.pos > 1 then
-        p.cursor.trans = trans_menu[trans_map[p.cursor.trans.pos-1]]
+    local curs = p.cursor.trans.pos
+    if (btnp(0)) and curs > 1 then
+        p.cursor.trans = trans_menu[trans_map[curs-1]]
     end
-    if (btnp(1)) and p.cursor.trans.pos < 3 then
-        p.cursor.trans = trans_menu[trans_map[p.cursor.trans.pos+1]]
+    if (btnp(1)) and curs < 3 then
+        p.cursor.trans = trans_menu[trans_map[curs+1]]
     end
     if (btnp(5)) then
         p.inf_trans.amt = p.cursor.trans.amt
@@ -441,8 +524,8 @@ function final_trans_update()
 end
 
 function calc_trans_buy()
-    local mid = flr((p.money/p.cursor.items.curr)/2)
-    local all = flr(p.money/p.cursor.items.curr)
+    local all = money:afford(p.cursor.items.curr)
+    local mid = flr(all/2)
 
     local remaining_space = p.inv.capacity - p.inv.current
 
@@ -481,15 +564,12 @@ function show_shit()
 end
 
 function show_adjust_amt()
+    draw_inv_stash = true
     scrn.upd = adjust_update
     scrn.drw = adjust_draw
 end
 
 function adjust_draw()
-    draw_rects(p.cursor.nav.c)
-    draw_inventory(7)
-    draw_stash(7)
-    
     print("adjust final amount?",item_coords.base_x-3, item_coords.base_y, 7)
     print("⬆️⬇️ = 1",item_coords.base_x-3, item_coords.base_y+7, 7)
     print("⬅️➡️ = 5",item_coords.base_x-3, item_coords.base_y+14, 7)
@@ -498,7 +578,7 @@ function adjust_draw()
 end
 
 function adjust_update()
-    -- switch this shit to use the inflight transaction
+    
     if(btnp(0)) and p.inf_trans.amt > 1 then 
         if p.inf_trans.amt-5 < 0 then
             p.inf_trans.amt=0
@@ -526,11 +606,10 @@ function adjust_update()
 
     if(btnp(5)) then
         if p.inf_trans.buying then
-            --fix all the math here for maxes and negatives
-            p.money -= p.inf_trans.amt*p.cursor.items.curr
+            money:buy(p.inf_trans.amt, p.cursor.items.curr)
             p.inventory[p.cursor.items.pos].amt += p.inf_trans.amt
         else
-            p.money += p.cursor.items.curr*p.inf_trans.amt
+            money:sell(p.inf_trans.amt,p.cursor.items.curr)
             p.inventory[p.cursor.items.pos].amt -= p.inf_trans.amt
         end
         p.inf_trans.buying = false
@@ -542,7 +621,7 @@ end
 
 item_coords = {
     base_x = 12,
-    base_y = 82,
+    base_y = 88,
     y_off = 7,
     x_off = 53
 }
@@ -615,13 +694,15 @@ items = {
 }
 
 function draw_rects(c)
-    -- inventory
-    rect(67,12,127,70,c)
-    
     -- stash
-    rect(0,12,60,70,c)
+    rect(0,9,60,70,c)
+
+    -- inventory
+    rect(67,9,127,70,c)
     
     -- bottom half
+    local title = p.cursor.nav.title
+    print(title,64-#title*2, bottom_half_y-12)
     rect(0,75,127,127,c)
 end
 
@@ -629,7 +710,7 @@ function draw_prices(c, money_check)
     -- todo: implement highlighting for inventory space
     money_check = money_check or false
 
-    if p.money/items.artifacts.curr < 1 and money_check then
+    if money.thousands == 0 and money.ones/items.artifacts.curr < 1 and money_check then
         print(items.artifacts.disp, items.artifacts.x, items.artifacts.y,8)
         print(items.artifacts.curr, item_coords.x_off, items.artifacts.y,8)
     else
@@ -637,7 +718,7 @@ function draw_prices(c, money_check)
         print(items.artifacts.curr, item_coords.x_off, items.artifacts.y,c)
     end
 
-    if p.money/items.wands.curr < 1 and money_check then
+    if money.thousands == 0 and money.ones/items.wands.curr < 1 and money_check then
         print(items.wands.disp, items.wands.x, items.wands.y,8)
         print(items.wands.curr, item_coords.x_off, items.wands.y,8)
     else
@@ -645,7 +726,7 @@ function draw_prices(c, money_check)
         print(items.wands.curr, item_coords.x_off, items.wands.y,c)
     end
 
-    if p.money/items.armor.curr < 1 and money_check then
+    if money.thousands == 0 and money.ones/items.armor.curr < 1 and money_check then
         print(items.armor.disp, items.armor.x, items.armor.y,8)
         print(items.armor.curr, item_coords.x_off, items.armor.y,8)
     else
@@ -653,7 +734,7 @@ function draw_prices(c, money_check)
         print(items.armor.curr, item_coords.x_off, items.armor.y,c)
     end
 
-    if p.money/items.weapons.curr < 1 and money_check then    
+    if money.thousands == 0 and money.ones/items.weapons.curr < 1 and money_check then    
         print(items.weapons.disp, items.weapons.x, items.weapons.y,8)
         print(items.weapons.curr, (item_coords.x_off*2)+10, items.weapons.y,8)
     else
@@ -661,7 +742,7 @@ function draw_prices(c, money_check)
         print(items.weapons.curr, (item_coords.x_off*2)+10, items.weapons.y,c)
     end
 
-    if p.money/items.scrolls.curr < 1 and money_check then    
+    if money.thousands == 0 and money.ones/items.scrolls.curr < 1 and money_check then    
         print(items.scrolls.disp, items.scrolls.x, items.scrolls.y,8)
         print(items.scrolls.curr, (item_coords.x_off*2)+10, items.scrolls.y,8)
     else
@@ -669,7 +750,7 @@ function draw_prices(c, money_check)
         print(items.scrolls.curr, (item_coords.x_off*2)+10, items.scrolls.y,c)
     end
 
-    if p.money/items.potions.curr < 1 and money_check then    
+    if money.thousands == 0 and money.ones/items.potions.curr < 1 and money_check then    
         print(items.potions.disp, items.potions.x, items.potions.y,8)
         print(items.potions.curr, (item_coords.x_off*2)+10, items.potions.y,8)
     else
@@ -679,14 +760,14 @@ function draw_prices(c, money_check)
 end
 
 __gfx__
-0000000000005000000440004ffffff4000440006000000600000ccc000b000000888000000cc000000400000000000000000000000000000000000000000000
-00a0000005555555004444000f00f0f00074470006000060000000cc00bbb00000888000000cc000004440000000000000000000000000000000000000000000
-00a6666005ccccc5044444400ffffff0077887700060060000004a0c0bbbbb00008880000004a000044444000000000000000000000000000000000000000000
-44a66666055ccc55444554440f0000f077788777000660000004a400bbbbbbb000888000000a4000444444400000000000000000000000000000000000000000
-00a66660005ccc50444554440ffffff0788888870a0660a0004a400000bbb000888888800004a0000fffff000000000000000000000000000000000000000000
-00a000000055c550044444400f0f00f07778877700a00a0004a4000000bbb00008888800000a40000fcfff000000000000000000000000000000000000000000
-000000000005c500004444000ffffff077788777040aa0404a40000000bbb000008880000004a0000fff4f000000000000000000000000000000000000000000
-0000000000055500000440004ffffff40777777040000004a400000000bbb00000080000000a40000fff4f000000000000000000000000000000000000000000
+00000000000cc00000000ccc00044000600000064ffffff400044000000b000000888000000cc000000400000000500000000000000000000000000000000000
+00a0000000c77c00000000cc00444400060000600f00f0f00074470000bbb00000888000000cc000004440000555555500000000000000000000000000000000
+00a666600ca77ac000004a0c04444440006006000ffffff0077887700bbbbb00008880000004a0000444440005ccccc500000000000000000000000000000000
+44a66666c77aa77c0004a40044455444000660000f0000f077788777bbbbbbb000888000000a400044444440055ccc5500000000000000000000000000000000
+00a66660c77aa77c004a4000444554440a0660a00ffffff07888888700bbb000888888800004a0000fffff00005ccc5000000000000000000000000000000000
+00a000000ca77ac004a400000444444000a00a000f0f00f07778877700bbb00008888800000a40000fcfff000055c55000000000000000000000000000000000
+0000000000c77c004a40000000444400040aa0400ffffff07778877700bbb000008880000004a0000fff4f000005c50000000000000000000000000000000000
+00000000000cc000a400000000044000400000044ffffff40777777000bbb00000080000000a40000fff4f000005550000000000000000000000000000000000
 __label__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
