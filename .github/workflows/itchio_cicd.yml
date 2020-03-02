@@ -18,11 +18,12 @@ jobs:
         unzip pico.zip
         chmod +x pico-8/pico8
         ./pico-8/pico8 -x build.p8
-        cp bike.p8 ~/.lexaloffle/pico-8/carts/
+        rm -rf ~/.lexaloffle/pico-8/carts/*
+        cp *.p8 ~/.lexaloffle/pico-8/carts/
         ./pico-8/pico8 -x build.p8
-        zip -r 7drl_bike.zip ~/.lexaloffle/pico-8/carts/bike_html
+        zip -r 7drl_rogue.zip ~/.lexaloffle/pico-8/carts/rogue_html
         curl -L -o butler.zip https://broth.itch.ovh/butler/linux-amd64/LATEST/archive/default
         unzip butler.zip
         chmod +x butler
-        ./butler push 7drl_bike.zip iceboxr/7drl-2020:html
+        ./butler push 7drl_rogue.zip iceboxr/7drl-2020:html
         
