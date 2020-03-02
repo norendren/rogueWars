@@ -95,16 +95,16 @@ end
 
 function draw_menu()
     cls()
-    -- for i=1,#menu do
-    --     for z=1,#menu[i] do
-    --         item = menu[i][z] 
-    --         print(item.title, item.x, item.y)
-    --     end
-    -- end
-    -- cursor_pos_x = menu[player_cursor.menu_pos.x][player_cursor.menu_pos.y].x
-    -- cursor_pos_y = menu[player_cursor.menu_pos.x][player_cursor.menu_pos.y].y
-    -- spr(132,cursor_pos_x-10,cursor_pos_y-2)
-    -- draw hand sprite
+    for i=1,#menu do
+        for z=1,#menu[i] do
+            item = menu[i][z] 
+            print(item.title, item.x, item.y)
+        end
+    end
+    cursor_pos_x = menu[player_cursor.menu_pos.x][player_cursor.menu_pos.y].x
+    cursor_pos_y = menu[player_cursor.menu_pos.x][player_cursor.menu_pos.y].y
+    spr(132,cursor_pos_x-10,cursor_pos_y-2)
+    draw hand sprite
 
     -- string_helper("the quick brown fox jumps over the lazy dog the quick brown fox jumps over the lazy dog the quick brown fox jumps over the lazy dog the quick brown fox jumps over the lazy dog the quick brown fox jumps over the lazy dog the quick brown fox jumps over the lazy dog", 10, 7)
     string_helper(practice, 10, 7)
