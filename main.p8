@@ -24,15 +24,17 @@ function _init()
     -- show_menu()
     -- show_intro()
     -- show_navigation()
-    -- show_bsl()
+    show_bsl()
     -- show_transaction()
-    show_final_transaction()
+    -- show_final_transaction()
 
     p.cursor.nav=nav_menu.adom
     p.cursor.items = items.artifacts
     p.cursor.bsl=bsl.buy
     p.cursor.trans=trans_menu.middle
 
+    nav_menu.home = nav_menu.adom
+    handle_home(p.cursor.nav == nav_menu.home)
     calc_inventory()
     randomize_prices()
 end
@@ -117,12 +119,6 @@ function intro_draw()
     print("press x to play", 30, 100, 7)
 end
 
-function show_navigation()
-    draw_inv_stash = true
-    scrn.upd = nav_update
-    scrn.drw = nav_draw
-end
-
 -- locking y values for top and bottom half
 top_half_y=25
 bottom_half_y=90
@@ -135,8 +131,10 @@ nav_coords = {
 }
 nav_map = {"adom","dcss","net","brogue","cog","gkh"}
 nav_menu = {
+    home={},
     adom={
         title="adom",
+        full="ancient domains of mystery",
         x=nav_coords.base_x,
         y=nav_coords.base_y,
         c=2,
@@ -144,6 +142,7 @@ nav_menu = {
     },
     dcss={
         title="dcss",
+        full="dungeon crawl stone soup",
         x=nav_coords.base_x,
         y=nav_coords.base_y+nav_coords.y_off,
         c=9,
@@ -171,7 +170,8 @@ nav_menu = {
         pos=5
     },
     gkh={
-        title="golden krone",
+        title="gkh",
+        full="golden krone hotel",
         x=nav_coords.base_x+nav_coords.x_off,
         y=nav_coords.base_y+nav_coords.y_off*2,
         c=10,
@@ -193,8 +193,8 @@ stash_coords = {
 }
 
 bsl_map = {"buy","sell","leave"}
+bsl_y = 115
 bsl = {
-    y=115,
     buy={
         title="buy",
         x=27,
@@ -314,12 +314,22 @@ money = {
     end
 }
 
+function show_navigation()
+    draw_inv_stash = true
+    scrn.upd = nav_update
+    scrn.drw = nav_draw
+end
+
 function nav_draw()
     -- dungeon selection
     draw_dungeon_selection(7)
 
     -- player cursor
     spr(0,p.cursor.nav.x-10,p.cursor.nav.y-1)
+
+    -- home
+    local home = nav_menu.home
+    spr(10,home.x+#home.title*4+2, home.y-2)
 end
 
 function nav_update()
@@ -338,8 +348,57 @@ function nav_update()
         p.cursor.nav = nav_menu[nav_map[curs+1]]
     end
     if (btnp(5)) then
+        handle_home(p.cursor.nav == nav_menu.home)
         show_bsl()
     end
+end
+
+function handle_home(arriving)
+    if arriving then
+        bsl = {
+            stash={
+                title="stash",
+                x=13,
+                pos=1,
+            },
+            buy={
+                title="buy",
+                x=44,
+                pos=2
+            },
+            sell={
+                title="sell",
+                x=68,
+                pos=3
+            },
+            leave={
+                title="leave",
+                x=98,
+                pos=4
+            },
+        }
+        bsl_map = {"stash","buy","sell","leave"}
+    else
+        bsl = {
+            buy={
+                title="buy",
+                x=27,
+                pos=1
+            },
+            sell={
+                title="sell",
+                x=52,
+                pos=2
+            },
+            leave={
+                title="leave",
+                x=82,
+                pos=3
+            },
+        }
+        bsl_map = {"buy","sell","leave"}
+    end
+    p.cursor.bsl = bsl.buy
 end
 
 function draw_inventory(c)
@@ -382,6 +441,7 @@ function draw_dungeon_selection(c)
     for k,rog in pairs(nav_menu) do
         print(rog.title, rog.x,rog.y,rog.c)
     end
+    
 end
 
 function show_bsl()
@@ -395,17 +455,18 @@ function bsl_draw()
     draw_bsl(7)
 
     -- player cursor
-    spr(0,p.cursor.bsl.x-10, bsl.y-1)
+    spr(0,p.cursor.bsl.x-10, bsl_y-1)
 end
 
 function bsl_update()
     local curs = p.cursor.bsl.pos
+    local map = bsl_map
 
     if (btnp(0)) and curs > 1 then
-        p.cursor.bsl = bsl[bsl_map[curs-1]]
+        p.cursor.bsl = bsl[map[curs-1]]
     end
-    if (btnp(1)) and curs < 3 then
-        p.cursor.bsl = bsl[bsl_map[curs+1]]
+    if (btnp(1)) and curs < #map then
+        p.cursor.bsl = bsl[map[curs+1]]
     end
     if (btnp(5)) then
         if p.cursor.bsl.title == "leave" then
@@ -424,9 +485,7 @@ end
 
 function draw_bsl(c)
     for k,v in pairs(bsl) do
-        if k != "y" then -- silly of me to put the y value in there
-            print(v.title,v.x,bsl.y,c)
-        end
+            print(v.title,v.x,bsl_y,c)
     end
 end
 
@@ -447,9 +506,9 @@ function transaction_draw()
     -- indicator for buy/sell mode
     rect(
         p.cursor.bsl.x-3,
-        bsl.y-3,
+        bsl_y-3,
         (p.cursor.bsl.x-3)+#p.cursor.bsl.title*5.5,
-        (bsl.y-3) + 10,
+        (bsl_y-3) + 10,
         7)
     
     -- player cursor
@@ -701,7 +760,7 @@ function draw_rects(c)
     rect(67,9,127,70,c)
     
     -- bottom half
-    local title = p.cursor.nav.title
+    local title = p.cursor.nav.full or p.cursor.nav.title
     print(title,64-#title*2, bottom_half_y-12)
     rect(0,75,127,127,c)
 end
