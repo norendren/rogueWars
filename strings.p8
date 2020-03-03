@@ -9,6 +9,10 @@ must use the time you have left to amass as much wealth as
 possible, and maybe find a way out of this mess...
 ]]
 
+function hcenter(s)
+    return 64-#s*2
+end
+
 -- iterate over string finding spaces until reaching max index and pick space closest to max index and chop the string
 function long_printer(msg, y, col)
     -- TODO: add fancy printing so it scrolls like a cursor

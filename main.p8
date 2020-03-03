@@ -2,6 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 #include strings.p8
+#include temp.p8
 
 --[[
     loan system?
@@ -27,8 +28,9 @@ function _init()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()
-    -- show_transaction()
-    -- show_final_transaction()
+    -- show_trans_select()
+    -- show_trans_opts()
+    -- show_final_trans()
 
     p.cursor.nav=nav_menu.adom
     p.cursor.items = items.artifact
@@ -42,9 +44,7 @@ function _init()
     randomize_prices()
     equip_coords()
 
-    
-    
-    --preprocess intro text
+    --preprocess intro text (placeholder for others)
     local curr = 1
     local new_s = ""
     for i=1,#intro do
@@ -98,14 +98,10 @@ function _update()
     scrn.upd()
 end
 
-function hcenter(s)
-    return 64-#s*2
-end
-
 function _draw()
     cls()
     if draw_inv_stash then
-        draw_rects(p.cursor.nav.c)
+        render_rects(p.cursor.nav.c)
         local a = aut.." aut"
         print(a,hcenter(a),2,7)
 
@@ -113,8 +109,8 @@ function _draw()
         spr(7,32,1)
         print("5", 28, 2, 7)
 
-        draw_inventory(7)
-        draw_stash(7)
+        render_inv(7)
+        render_stash(7)
     end
     --full border
     -- rect(0,0,127,127,14)
@@ -123,17 +119,17 @@ end
 
 function show_menu()
     draw_inv_stash = false
-    scrn.upd = menu_update
-    scrn.drw = menu_draw
+    scrn.upd = update_menu
+    scrn.drw = draw_menu
 end
 
-function menu_update()
+function update_menu()
     if (btnp(5)) then
         show_intro()
     end
 end
 
-function menu_draw()
+function draw_menu()
     print("shopkeeprl", 40, 20, 7)
 
     if frame < 10 then
@@ -146,17 +142,17 @@ function show_intro()
     draw_inv_stash = false
     frame = 0
     -- end that show only once for each roguelike
-    scrn.upd = intro_update
-    scrn.drw = intro_draw
+    scrn.upd = update_intro
+    scrn.drw = draw_intro
 end
 
-function intro_update()
+function update_intro()
     if (btnp(5)) then
         show_home_select()
     end
 end
 
-function intro_draw()
+function draw_intro()
     -- todo: add help text and home roguelike
     local part=sub(intro,1,scroll)
     long_printer(part, 0, 7)
@@ -167,12 +163,13 @@ end
 function show_home_select()
     draw_inv_stash = false
     -- end that show only once for each roguelike
-    scrn.upd = home_update
-    scrn.drw = home_draw
+    scrn.upd = update_home
+    scrn.drw = draw_home
 end
+
 -- holder for home selection
 h={curr=1}
-function home_draw()
+function draw_home()
     print("please select a home roguelike", 3, 2, 7)
     local y=35
     local pos=1
@@ -186,7 +183,7 @@ function home_draw()
     spr(0,h[nav_map[h.curr]].x-10,h[nav_map[h.curr]].y-1)
 end
 
-function home_update()
+function update_home()
     if btnp(2) and h.curr > 1 then h.curr-=1 end
     if btnp(3) and h.curr < 6 then h.curr+=1 end
     if btnp(5) then 
@@ -195,268 +192,15 @@ function home_update()
     end
 end
 
--- locking y values for top and bottom half
-top_half_y=25
-bottom_half_y=90
-
-nav_coords = {
-    base_x=20,
-    base_y=bottom_half_y,
-    x_off = 55,
-    y_off = 8
-}
-nav_map={"adom","dcss","net","brogue","cog","gkh"}
-nav_menu={
-    home={},
-    visit={},
-    adom={
-        title="adom",
-        full="ancient domains of mystery",
-        x=nav_coords.base_x,
-        y=nav_coords.base_y,
-        c=2,
-        pos=1
-    },
-    dcss={
-        title="dcss",
-        full="dungeon crawl stone soup",
-        x=nav_coords.base_x,
-        y=nav_coords.base_y+nav_coords.y_off,
-        c=9,
-        pos=2
-    },
-    net={
-        title="nethack",
-        x=nav_coords.base_x,
-        y=nav_coords.base_y+nav_coords.y_off*2,
-        c=12,
-        pos=3
-    },
-    brogue={
-        title="brogue",
-        x=nav_coords.base_x+nav_coords.x_off,
-        y=nav_coords.base_y, 
-        c=4,
-        pos=4
-    },
-    cog={
-        title="cogmind", 
-        x=nav_coords.base_x+nav_coords.x_off,
-        y=nav_coords.base_y+nav_coords.y_off,
-        c=11,
-        pos=5
-    },
-    gkh={
-        title="gkh",
-        full="golden krone hotel",
-        x=nav_coords.base_x+nav_coords.x_off,
-        y=nav_coords.base_y+nav_coords.y_off*2,
-        c=10,
-        pos=6
-    }
-}
-
-inv_coords={
-    base_x=72,
-    base_y=top_half_y,
-    x_off=45,
-    y_off = 8
-}
-stash_coords = {
-    base_x=5,
-    base_y=top_half_y,
-    x_off=45,
-    y_off = 8
-}
-
-bsl_map = {"buy","sell","leave"}
-bsl_y = 115
-bsl = {
-    buy={
-        title="buy",
-        x=27,
-        pos=1
-    },
-    sell={
-        title="sell",
-        x=52,
-        pos=2
-    },
-    leave={
-        title="leave",
-        x=82,
-        pos=3
-    },
-}
-
-trans_map ={"middle","all","cust"}
-trans_menu={
-    y=110,
-    middle={
-        amt=0,
-        x=15,
-        pos=1
-    },
-    all={
-        amt=0,
-        x=42,
-        pos=2
-    },
-    cust={
-        amt=0,
-        x=90,
-        pos=3
-    }
-}
-
--- player data
-p = {
-    bag={
-        affix="",
-        c=7,
-        capacity=50,
-        current=0
-    },
-    inf_trans ={
-        buying=false,
-        selling=false,
-        amt=0
-    },
-    cursor={
-        nav={},
-        items={},
-        bsl={},
-        trans={},
-        stash={}
-    }
-}
-
-inv_map={"artifact","wand","armor","weapon","scroll","potion"}
-in_inventory = true
-inv={
-    artifact={
-        disp="artifact",
-        amt=10,
-        pos=1
-    },
-    wand={
-        disp="wand",
-        amt=0,
-        pos=2
-    },
-    armor={
-        disp="armor",
-        amt=0,
-        pos=3
-    },
-    weapon={
-        disp="weapon",
-        amt=0,
-        pos=4
-    },
-    scroll={
-        disp="scroll",
-        amt=0,
-        pos=5
-    },
-    potion={
-        disp="potion",
-        amt=0,
-        pos=6
-    }
-}
-
-stash={
-    artifact={
-        disp="artifact",
-        amt=20,
-        pos=1
-    },
-    wand={
-        disp="wand",
-        amt=80,
-        pos=2
-    },
-    armor={
-        disp="armor",
-        amt=40,
-        pos=3
-    },
-    weapon={
-        disp="weapon",
-        amt=0,
-        pos=4
-    },
-    scroll={
-        disp="scroll",
-        amt=0,
-        pos=5
-    },
-    potion={
-        disp="potion",
-        amt=0,
-        pos=6
-    }
-}
-
-money = {
-    ones=0,
-    thousands=5,
-    buy=function(self, amt, price)
-        for i=1,amt do
-            self.ones -= price
-            if self.ones < 0 then
-                self.thousands -= abs(flr(self.ones/1000))
-                self.ones = abs(self.ones % 1000)
-            end
-        end
-    end,
-    sell=function(self, amt, price)
-        for i=1,amt do
-            self.ones += price
-            if flr(self.ones/1000) > 0 then
-                self.thousands += flr(self.ones/1000)
-                self.ones = self.ones % 1000
-            end
-        end
-    end,
-    afford=function(self, price)
-        local have_money = false
-        if self.ones > 0 or self.thousands > 0 then
-            have_money = true
-        else
-            return 0
-        end
-
-        local amt = 0
-        local ones = self.ones
-        local thousands = self.thousands
-        
-        while have_money do
-            ones -= price
-            if ones <= 0 and thousands == 0 then
-                return amt
-            else
-                thousands -= abs(flr(ones/1000))
-                ones = abs(ones % 1000)
-                if thousands < 0 then
-                    return amt
-                end
-            end
-            amt += 1
-        end
-    end
-}
-
 function show_navigation()
     draw_inv_stash = true
-    scrn.upd = nav_update
-    scrn.drw = nav_draw
+    scrn.upd = update_nav
+    scrn.drw = draw_nav
 end
 
-function nav_draw()
+function draw_nav()
     -- dungeon selection
-    draw_dungeon_selection(7)
+    render_rog_select(7)
 
     -- player cursor
     spr(0,p.cursor.nav.x-10,p.cursor.nav.y-1)
@@ -477,7 +221,7 @@ function nav_draw()
     end
 end
 
-function nav_update()
+function update_nav()
     local curs = p.cursor.nav.pos
 
     if (btnp(0)) and curs > 3 then
@@ -499,115 +243,21 @@ function nav_update()
     end
 end
 
-function handle_home(arriving)
-    if arriving then
-        bsl = {
-            stash={
-                title="stash",
-                x=13,
-                pos=1,
-            },
-            buy={
-                title="buy",
-                x=44,
-                pos=2
-            },
-            sell={
-                title="sell",
-                x=68,
-                pos=3
-            },
-            leave={
-                title="leave",
-                x=98,
-                pos=4
-            },
-        }
-        bsl_map = {"stash","buy","sell","leave"}
-    else
-        bsl = {
-            buy={
-                title="buy",
-                x=27,
-                pos=1
-            },
-            sell={
-                title="sell",
-                x=52,
-                pos=2
-            },
-            leave={
-                title="leave",
-                x=82,
-                pos=3
-            },
-        }
-        bsl_map = {"buy","sell","leave"}
-    end
-    p.cursor.bsl = bsl.buy
-end
-
-function pad(i)
-    local pad = ""
-    if i < 100 then pad=pad.."0" end
-    if i < 10 then pad=pad.."0" end
-    return pad
-end
-
-function draw_inventory(c)
-    if money.thousands == 0 then
-        print("$ "..money.ones, 92, 2, c)
-    else
-        -- gotta pad the ones in cases where < 100 or < 10
-        print("$ "..money.thousands..pad(money.ones)..money.ones, 92, 2, c)
-    end
-
-    if p.bag.affix == "" then
-        print("bag", inv_coords.base_x+1, inv_coords.base_y-12, p.bag.c)
-    else
-        print(p.bag.affix,inv_coords.base_x-3, inv_coords.base_y-14, p.bag.c)
-        print("bag", inv_coords.base_x+1, inv_coords.base_y-7, p.bag.c)
-    end
-
-    print(p.bag.current.." / "..p.bag.capacity, inv_coords.base_x+25, inv_coords.base_y-12, c)
-    for k,v in pairs(inv) do
-        print(v.disp, v.x+8, v.y, c)
-        spr(v.sp,v.x-3,v.y-1)
-        print(v.amt, v.x+inv_coords.x_off, v.y, c)
-    end
-end
-
-function draw_stash(c)
-    print("stash", stash_coords.base_x+3, stash_coords.base_y-12, c)
-    for k,v in pairs(stash) do
-        print(v.disp, v.x+8, v.y, c)
-        spr(v.sp,v.x-3,v.y-1)
-        print(v.amt, v.x+stash_coords.x_off, v.y, c)
-    end
-end
-
-function draw_dungeon_selection(c)
-    for k,rog in pairs(nav_menu) do
-        print(rog.title, rog.x,rog.y,rog.c)
-    end
-    
-end
-
 function show_bsl()
     draw_inv_stash = true
-    scrn.drw = bsl_draw
-    scrn.upd = bsl_update
+    scrn.drw = draw_bsl
+    scrn.upd = update_bsl
 end
 
-function bsl_draw()
-    draw_prices(7)
-    draw_bsl(7)
+function draw_bsl()
+    render_prices(7)
+    render_bsl(7)
 
     -- player cursor
     spr(0,p.cursor.bsl.x-10, bsl_y-1)
 end
 
-function bsl_update()
+function update_bsl()
     local curs = p.cursor.bsl.pos
     local map = bsl_map
 
@@ -630,26 +280,20 @@ function bsl_update()
         elseif p.cursor.bsl.title == "stash" then
             show_stash()
         else
-            show_transaction()
+            show_trans_select()
         end
-    end
-end
-
-function draw_bsl(c)
-    for k,v in pairs(bsl) do
-            print(v.title,v.x,bsl_y,c)
     end
 end
 
 function show_stash()
     draw_inv_stash = true
-    scrn.drw = stash_draw
-    scrn.upd = stash_update
+    scrn.drw = draw_stash
+    scrn.upd = update_stash
 end
 
-function stash_draw()
-    draw_prices(7)
-    draw_bsl(7)
+function draw_stash()
+    render_prices(7)
+    render_bsl(7)
 
     -- indicator for buy/sell mode
     rect(
@@ -665,7 +309,7 @@ function stash_draw()
     rect(x-4,y-2,x+54,y+6,7)
 end
 
-function stash_update()
+function update_stash()
     local pos=p.cursor.stash.pos
     if btnp(0) and in_inventory then
         in_inventory=false
@@ -702,12 +346,13 @@ end
 
 function show_stash_transfer()
     draw_inv_stash = true
-    scrn.drw = stash_transfer_draw
-    scrn.upd = stash_transfer_update
+    scrn.drw = draw_stash_transfer
+    scrn.upd = update_stash_transfer
 end
-function stash_transfer_draw()
-    -- draw_prices(7)
-    -- draw_bsl(7)
+
+function draw_stash_transfer()
+    -- render_prices(7)
+    -- render_bsl(7)
     if in_inventory then
         print("transfer "..p.cursor.stash.disp.."s to stash",item_coords.base_x, item_coords.base_y, 7)
         print("⬆️⬇️ = 1",item_coords.base_x, item_coords.base_y+7, 7)
@@ -726,7 +371,7 @@ function stash_transfer_draw()
     rect(x-4,y-2,x+54,y+6,7)
 end
 
-function stash_transfer_update()
+function update_stash_transfer()
     local pos=p.cursor.stash.pos
     local space = p.bag.capacity - p.bag.current
     if(btnp(0)) and p.inf_trans.amt > 1 then 
@@ -783,19 +428,19 @@ function stash_transfer_update()
     end
 end
 
-function show_transaction()
+function show_trans_select()
     draw_inv_stash = true
-    scrn.drw = transaction_draw
-    scrn.upd = transaction_update
+    scrn.drw = draw_trans_select
+    scrn.upd = update_trans_select
 end
 
-function transaction_draw()
+function draw_trans_select()
     if p.cursor.bsl.title == "buy" then
-        draw_prices(7, true)
+        render_prices(7, true)
     else
-        draw_prices(7)
+        render_prices(7)
     end
-    draw_bsl(7)
+    render_bsl(7)
 
     -- indicator for buy/sell mode
     rect(
@@ -809,7 +454,7 @@ function transaction_draw()
     spr(0,p.cursor.items.x-10,p.cursor.items.y-1)
 end
 
-function transaction_update()
+function update_trans_select()
     local curs = p.cursor.items.pos
 
     if (btnp(0)) and curs > 3 then
@@ -825,7 +470,7 @@ function transaction_update()
         p.cursor.items = items[i_menu_map[curs+1]]
     end
     if (btnp(5)) then
-        show_final_transaction()
+        show_trans_opts()
     end
     if (btnp(4)) then
         p.cursor.items = items.artifact -- back to baseline
@@ -833,13 +478,13 @@ function transaction_update()
     end
 end
 
-function show_final_transaction()
+function show_trans_opts()
     draw_inv_stash = true
-    scrn.drw = final_trans_draw
-    scrn.upd = final_trans_update
+    scrn.drw = draw_trans_opts
+    scrn.upd = update_trans_opts
 end
 
-function final_trans_draw()
+function draw_trans_opts()
     print(p.cursor.bsl.title.."ing "..p.cursor.items.disp.." for "..p.cursor.items.curr,item_coords.base_x-3, item_coords.base_y, 7)
 
     -- middle of the road amount
@@ -857,7 +502,7 @@ function final_trans_draw()
     spr(0,p.cursor.trans.x-10, trans_menu.y-1)
 end
 
-function final_trans_update()
+function update_trans_opts()
     local curs = p.cursor.trans.pos
     if (btnp(0)) and curs > 1 then
         p.cursor.trans = trans_menu[trans_map[curs-1]]
@@ -867,62 +512,22 @@ function final_trans_update()
     end
     if (btnp(5)) then
         p.inf_trans.amt = p.cursor.trans.amt
-        show_adjust_amt()
+        show_final_trans()
     end
     if(btnp(4)) then
         p.inf_trans.buying = false
         p.inf_trans.selling = false
-        show_transaction()
+        show_trans_select()
     end
 end
 
-function calc_trans_buy()
-    local all = money:afford(p.cursor.items.curr)
-    local mid = flr(all/2)
-
-    local remaining_space = p.bag.capacity - p.bag.current
-
-    if mid > remaining_space then
-        if p.bag.capacity == p.bag.current then
-            mid = 0
-        else
-            mid = flr(remaining_space/2)
-        end
-    end
-    if all > remaining_space then
-        all = p.bag.capacity - p.bag.current
-    end
-    return mid,all
-end
-
-function calc_trans_sell()
-    local mid = flr(inv[p.cursor.items.disp].amt/2)
-    local all = inv[p.cursor.items.disp].amt
-
-    return mid, all
-end
-
--- semi helpful debugger
-function show_shit()
-    scrn.upd = function()
-    end
-
-    scrn.drw = function()
-        cursor(0)
-        color(7)
-        for k,v in pairs(bsl) do
-            print(k)
-        end
-    end
-end
-
-function show_adjust_amt()
+function show_final_trans()
     draw_inv_stash = true
-    scrn.upd = adjust_update
-    scrn.drw = adjust_draw
+    scrn.upd = update_final_trans
+    scrn.drw = draw_final_trans
 end
 
-function adjust_draw()
+function draw_final_trans()
     print("adjust final amount?",item_coords.base_x-3, item_coords.base_y, 7)
     print("⬆️⬇️ = 1",item_coords.base_x-3, item_coords.base_y+7, 7)
     print("⬅️➡️ = 5",item_coords.base_x-3, item_coords.base_y+14, 7)
@@ -930,8 +535,7 @@ function adjust_draw()
     print(p.inf_trans.amt, 62, trans_menu.y, 7)
 end
 
-function adjust_update()
-    
+function update_final_trans()
     if(btnp(0)) and p.inf_trans.amt > 1 then 
         if p.inf_trans.amt-5 < 0 then
             p.inf_trans.amt=0
@@ -953,9 +557,10 @@ function adjust_update()
             p.inf_trans.amt+=1 
         end
     end
+
     if(btnp(3)) and p.inf_trans.amt > 1 then p.inf_trans.amt-=1 end
 
-    if(btnp(4)) then show_final_transaction() end
+    if(btnp(4)) then show_trans_opts() end
 
     if(btnp(5)) then
         if p.inf_trans.buying then
@@ -972,155 +577,15 @@ function adjust_update()
     end
 end
 
-item_coords = {
-    base_x = 12,
-    base_y = 88,
-    y_off = 7,
-    x_off = 53
-}
-
--- indexes match the 'pos' field in the items table
-i_menu_map = {
-    "artifact",
-    "wand",
-    "armor",
-    "weapon",
-    "scroll",
-    "potion"
-}
-
-items={
-    artifact={
-        disp="artifact",
-        x=item_coords.base_x,
-        y=item_coords.base_y,
-        low=1500,
-        high=3000,
-        curr=0,
-        pos=1
-    },
-    wand={
-        disp="wand",
-        x=item_coords.base_x,
-        y=item_coords.base_y+item_coords.y_off,
-        low=500,
-        high=1400,
-        curr=0,
-        pos=2
-    },
-    armor={
-        disp="armor",
-        x=item_coords.base_x,
-        y=item_coords.base_y+item_coords.y_off*2,
-        low=100,
-        high=450,
-        curr=0,
-        pos=3
-    },
-    weapon={
-        disp="weapon",
-        x=item_coords.base_x+item_coords.x_off+18,
-        y=item_coords.base_y,
-        low=30,
-        high=90,
-        curr=0,
-        pos=4
-    },
-    scroll={
-        disp="scroll",
-        x=item_coords.base_x+item_coords.x_off+18,
-        y=item_coords.base_y+item_coords.y_off,
-        low=7,
-        high=25,
-        curr=0,
-        pos=5
-    },
-    potion={
-        disp="potion",
-        x=item_coords.base_x+item_coords.x_off+18,
-        y=item_coords.base_y+item_coords.y_off*2,
-        low=1,
-        high=6,
-        curr=0,
-        pos=6
-    }
-}
-
-function draw_rects(c)
-    -- stash
-    rect(0,9,60,73,c)
-
-    -- inventory
-    rect(67,9,127,73,c)
-    
-    -- bottom half
-    local title = p.cursor.nav.full or p.cursor.nav.title
-    print(title,64-#title*2, bottom_half_y-12)
-    rect(0,75,127,127,c)
-end
-
-function draw_prices(c, money_check)
-    -- todo: implement highlighting for inventory space
-    money_check = money_check or false
-
-    if money.thousands == 0 and money.ones/items.artifact.curr < 1 and money_check then
-        print(items.artifact.disp, items.artifact.x, items.artifact.y,8)
-        print(items.artifact.curr, item_coords.x_off, items.artifact.y,8)
-    else
-        print(items.artifact.disp, items.artifact.x, items.artifact.y,c)
-        print(items.artifact.curr, item_coords.x_off, items.artifact.y,c)
-    end
-
-    if money.thousands == 0 and money.ones/items.wand.curr < 1 and money_check then
-        print(items.wand.disp, items.wand.x, items.wand.y,8)
-        print(items.wand.curr, item_coords.x_off, items.wand.y,8)
-    else
-        print(items.wand.disp, items.wand.x, items.wand.y,c)
-        print(items.wand.curr, item_coords.x_off, items.wand.y,c)
-    end
-
-    if money.thousands == 0 and money.ones/items.armor.curr < 1 and money_check then
-        print(items.armor.disp, items.armor.x, items.armor.y,8)
-        print(items.armor.curr, item_coords.x_off, items.armor.y,8)
-    else
-        print(items.armor.disp, items.armor.x, items.armor.y,c)
-        print(items.armor.curr, item_coords.x_off, items.armor.y,c)
-    end
-
-    if money.thousands == 0 and money.ones/items.weapon.curr < 1 and money_check then    
-        print(items.weapon.disp, items.weapon.x, items.weapon.y,8)
-        print(items.weapon.curr, (item_coords.x_off*2)+10, items.weapon.y,8)
-    else
-        print(items.weapon.disp, items.weapon.x, items.weapon.y,c)
-        print(items.weapon.curr, (item_coords.x_off*2)+10, items.weapon.y,c)
-    end
-
-    if money.thousands == 0 and money.ones/items.scroll.curr < 1 and money_check then    
-        print(items.scroll.disp, items.scroll.x, items.scroll.y,8)
-        print(items.scroll.curr, (item_coords.x_off*2)+10, items.scroll.y,8)
-    else
-        print(items.scroll.disp, items.scroll.x, items.scroll.y,c)
-        print(items.scroll.curr, (item_coords.x_off*2)+10, items.scroll.y,c)
-    end
-
-    if money.thousands == 0 and money.ones/items.potion.curr < 1 and money_check then    
-        print(items.potion.disp, items.potion.x, items.potion.y,8)
-        print(items.potion.curr, (item_coords.x_off*2)+10, items.potion.y,8)
-    else
-        print(items.potion.disp, items.potion.x, items.potion.y,c)
-        print(items.potion.curr, (item_coords.x_off*2)+10, items.potion.y,c)
-    end
-end
-
 __gfx__
-00000000000cc0000000ccc000044000060000604ffffff400444000008000800088800002222220000400000000500002222220000000000000000000000000
-00a0000000c77c0000000cc000444400006006000f00f0f000747000088808880088800022222222004440000555555522222222000000000000000000000000
-00a666600ca77ac00004a0c004444440000660000ffffff007888700088888880088800049ff1f100444440005ccccc549ff1f10000000000000000000000000
-44a66666c77aa77c004a4000444554440a0660a00f0000f078888870088888880088800049fffff044444440055ccc5549fffff0000000000000000000000000
-00a66660c77aa77c04a400004445544400a00a000ffffff07888887008888888888888804ccc3ccc0fffff00005ccc504ccc3ccc000000000000000000000000
-00a000000ca77ac04a40000004444440040aa0400f0f00f0778887700088888008888800f0cc3c0f0fcfff000055c550f0cc3c0f000000000000000000000000
-0000000000c77c00a400000000444400400000044ffffff407777700000888000088800000c00c000fff4f000005c50000c00c00000000000000000000000000
-00000000000cc0000000000000044000000000000000000000000000000080000008000000f00f000fff4f000005550000f00f00000000000000000000000000
+00000000000cc0000000ccc000044000060000604ffffff400444000008000800088800002222220000400000000500000000000000000000000000000000000
+00a0000000c77c0000000cc000444400006006000f00f0f000747000088808880088800022222222004440000555555500000000000000000000000000000000
+00a666600ca77ac00004a0c004444440000660000ffffff007888700088888880088800009ff1f100444440005ccccc500000000000000000000000000000000
+44a66666c77aa77c004a4000444554440a0660a00f0000f078888870088888880088800049fffff044444440055ccc5500000000000000000000000000000000
+00a66660c77aa77c04a400004445544400a00a000ffffff07888887008888888888888804ccc3ccc0fffff00005ccc5000000000000000000000000000000000
+00a000000ca77ac04a40000004444440040aa0400f0f00f0778887700088888008888800f4cc3c0f0fcfff000055c55000000000000000000000000000000000
+0000000000c77c00a400000000444400400000044ffffff407777700000888000088800000c00c000fff4f000005c50000000000000000000000000000000000
+00000000000cc0000000000000044000000000000000000000000000000080000008000000f00f000fff4f000005550000000000000000000000000000000000
 __label__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
