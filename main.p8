@@ -22,7 +22,9 @@ function _init()
     -- show_menu()
     -- show_intro()
     -- show_navigation()
-    show_bsl()
+    -- show_bsl()
+    -- show_stash()
+    show_stash_transfer()
     -- show_transaction()
     -- show_final_transaction()
 
@@ -30,6 +32,7 @@ function _init()
     p.cursor.items = items.artifact
     p.cursor.bsl=bsl.buy
     p.cursor.trans=trans_menu.middle
+    p.cursor.stash=inv.artifact
 
     nav_menu.home = nav_menu.adom
     handle_home(p.cursor.nav == nav_menu.home)
@@ -234,7 +237,7 @@ bsl = {
 }
 
 trans_map ={"middle","all","cust"}
-trans_menu = {
+trans_menu={
     y=110,
     middle={
         amt=0,
@@ -270,28 +273,17 @@ p = {
         nav={},
         items={},
         bsl={},
-        trans={}
-    },
-    inventory={{disp="artifact",amt=0},
-    {disp="wand",amt=0},
-    {disp="armor",amt=0},
-    {disp="weapon",amt=0},
-    {disp="scroll",amt=0},
-    {disp="potion",amt=0}},
-
-    stash={{disp="artifact",amt=0},
-    {disp="wand",amt=0},
-    {disp="armor",amt=0},
-    {disp="weapon",amt=0},
-    {disp="scroll",amt=0},
-    {disp="potion",amt=0}}
+        trans={},
+        stash={}
+    }
 }
 
 inv_map={"artifact","wand","armor","weapon","scroll","potion"}
+in_inventory = true
 inv={
     artifact={
         disp="artifact",
-        amt=0,
+        amt=10,
         pos=1
     },
     wand={
@@ -324,17 +316,17 @@ inv={
 stash={
     artifact={
         disp="artifact",
-        amt=0,
+        amt=20,
         pos=1
     },
     wand={
         disp="wand",
-        amt=0,
+        amt=80,
         pos=2
     },
     armor={
         disp="armor",
-        amt=0,
+        amt=40,
         pos=3
     },
     weapon={
@@ -592,10 +584,127 @@ function stash_draw()
         7)
     
     -- player cursor
-    spr(0,p.cursor.items.x-10,p.cursor.items.y-1)
+    local x=p.cursor.stash.x
+    local y=p.cursor.stash.y
+    rect(x-2,y-2,x+54,y+6,7)
 end
 
 function stash_update()
+    local pos=p.cursor.stash.pos
+    if btnp(0) and in_inventory then
+        in_inventory=false
+        p.cursor.stash=stash[inv_map[pos]]
+    end
+    if btnp(1) and not in_inventory then
+        in_inventory=true
+        p.cursor.stash=inv[inv_map[pos]]
+    end
+    if btnp(2) and pos >= 1 then
+        if pos==1 then pos=7 end
+        if in_inventory then
+            p.cursor.stash=inv[inv_map[pos-1]]
+        else
+            p.cursor.stash=stash[inv_map[pos-1]]
+        end
+    end
+    if btnp(3) and pos <= 6 then
+        if pos==6 then pos=0 end
+        if in_inventory then
+            p.cursor.stash=inv[inv_map[(pos+1)]]
+        else
+            p.cursor.stash=stash[inv_map[(pos+1)]]
+        end
+    end
+    if btnp(4) then
+        show_bsl()
+    end
+    if btnp(5) then
+        p.inf_trans.amt = 0
+        show_stash_transfer()
+    end
+end
+
+function show_stash_transfer()
+    draw_inv_stash = true
+    scrn.drw = stash_transfer_draw
+    scrn.upd = stash_transfer_update
+end
+function stash_transfer_draw()
+    -- draw_prices(7)
+    -- draw_bsl(7)
+    if in_inventory then
+        print("transfer "..p.cursor.stash.disp.."s to stash",item_coords.base_x, item_coords.base_y, 7)
+        print("⬆️⬇️ = 1",item_coords.base_x, item_coords.base_y+7, 7)
+        print("⬅️➡️ = 5",item_coords.base_x, item_coords.base_y+14, 7)
+    else
+        print("transfer "..p.cursor.stash.disp.."s to inventory",item_coords.base_x, item_coords.base_y, 7)
+        print("⬆️⬇️ = 1",item_coords.base_x, item_coords.base_y+7, 7)
+        print("⬅️➡️ = 5",item_coords.base_x, item_coords.base_y+14, 7)
+    end
+
+    print(p.inf_trans.amt, 62, trans_menu.y, 7)
+    
+    -- player cursor
+    local x=p.cursor.stash.x
+    local y=p.cursor.stash.y
+    rect(x-2,y-2,x+54,y+6,7)
+end
+
+function stash_transfer_update()
+    local pos=p.cursor.stash.pos
+    local space = p.bag.capacity - p.bag.current
+    if(btnp(0)) and p.inf_trans.amt > 1 then 
+        if p.inf_trans.amt-5 < 0 then
+            p.inf_trans.amt=0
+        else     
+            p.inf_trans.amt-=5 
+        end
+    end
+    if(btnp(1)) then
+        if p.inf_trans.amt + 5 > p.cursor.stash.amt then
+            if not in_inventory and p.inf_trans.amt + 5 > space then
+                p.inf_trans.amt = space
+            else
+                p.inf_trans.amt = p.cursor.stash.amt
+            end
+        else
+            if not in_inventory and p.inf_trans.amt + 5 > space then
+                p.inf_trans.amt = space
+            else
+                p.inf_trans.amt+=5 
+            end
+        end
+    end
+    if(btnp(2)) then 
+        if p.inf_trans.amt + 1 > p.cursor.stash.amt then
+            if not in_inventory and p.inf_trans.amt + 5 > space then
+                p.inf_trans.amt = space
+            else
+                p.inf_trans.amt = p.cursor.stash.amt
+            end
+        else
+            if not in_inventory and p.inf_trans.amt + 1 > space then
+                p.inf_trans.amt = space
+            else
+                p.inf_trans.amt+=1
+            end
+        end
+    end
+    if(btnp(3)) and p.inf_trans.amt > 1 then p.inf_trans.amt-=1 end
+
+    if(btnp(4)) then show_stash() end
+
+    if(btnp(5)) then
+        if in_inventory then
+            stash[inv_map[pos]].amt += p.inf_trans.amt
+            p.cursor.stash.amt -= p.inf_trans.amt
+        else
+            inv[inv_map[pos]].amt += p.inf_trans.amt
+            p.cursor.stash.amt -= p.inf_trans.amt
+        end
+        calc_inventory()
+        show_bsl()
+    end
 end
 
 function show_transaction()
