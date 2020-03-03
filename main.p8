@@ -27,7 +27,7 @@ function _init()
     -- show_final_transaction()
 
     p.cursor.nav=nav_menu.adom
-    p.cursor.items = items.artifacts
+    p.cursor.items = items.artifact
     p.cursor.bsl=bsl.buy
     p.cursor.trans=trans_menu.middle
 
@@ -58,9 +58,9 @@ function equip_coords()
 end
 
 function calc_inventory()
-    p.inv.current = 0
-    for i=1,#p.inventory do
-        p.inv.current+=p.inventory[i].amt
+    p.bag.current = 0
+    for item,v in pairs(inv) do
+        p.bag.current+=v.amt
     end
 end
 
@@ -255,7 +255,7 @@ trans_menu = {
 
 -- player data
 p = {
-    inv={
+    bag={
         affix="",
         c=7,
         capacity=50,
@@ -272,30 +272,30 @@ p = {
         bsl={},
         trans={}
     },
-    inventory={{disp="artifacts",amt=0},
-    {disp="wands",amt=0},
+    inventory={{disp="artifact",amt=0},
+    {disp="wand",amt=0},
     {disp="armor",amt=0},
-    {disp="weapons",amt=0},
-    {disp="scrolls",amt=0},
-    {disp="potions",amt=0}},
+    {disp="weapon",amt=0},
+    {disp="scroll",amt=0},
+    {disp="potion",amt=0}},
 
-    stash={{disp="artifacts",amt=0},
-    {disp="wands",amt=0},
+    stash={{disp="artifact",amt=0},
+    {disp="wand",amt=0},
     {disp="armor",amt=0},
-    {disp="weapons",amt=0},
-    {disp="scrolls",amt=0},
-    {disp="potions",amt=0}}
+    {disp="weapon",amt=0},
+    {disp="scroll",amt=0},
+    {disp="potion",amt=0}}
 }
 
 inv_map={"artifact","wand","armor","weapon","scroll","potion"}
 inv={
     artifact={
-        disp="artifacts",
+        disp="artifact",
         amt=0,
         pos=1
     },
     wand={
-        disp="wands",
+        disp="wand",
         amt=0,
         pos=2
     },
@@ -305,17 +305,17 @@ inv={
         pos=3
     },
     weapon={
-        disp="weapons",
+        disp="weapon",
         amt=0,
         pos=4
     },
     scroll={
-        disp="scrolls",
+        disp="scroll",
         amt=0,
         pos=5
     },
     potion={
-        disp="potions",
+        disp="potion",
         amt=0,
         pos=6
     }
@@ -323,12 +323,12 @@ inv={
 
 stash={
     artifact={
-        disp="artifacts",
+        disp="artifact",
         amt=0,
         pos=1
     },
     wand={
-        disp="wands",
+        disp="wand",
         amt=0,
         pos=2
     },
@@ -338,17 +338,17 @@ stash={
         pos=3
     },
     weapon={
-        disp="weapons",
+        disp="weapon",
         amt=0,
         pos=4
     },
     scroll={
-        disp="scrolls",
+        disp="scroll",
         amt=0,
         pos=5
     },
     potion={
-        disp="potions",
+        disp="potion",
         amt=0,
         pos=6
     }
@@ -497,28 +497,18 @@ function draw_inventory(c)
         print("$ "..money.thousands..money.ones, 92, 2, c)
     end
 
-    if p.inv.affix == "" then
-        print("bag", inv_coords.base_x+1, inv_coords.base_y-12, p.inv.c)
+    if p.bag.affix == "" then
+        print("bag", inv_coords.base_x+1, inv_coords.base_y-12, p.bag.c)
     else
-        print(p.inv.affix,inv_coords.base_x-3, inv_coords.base_y-14, p.inv.c)
-        print("bag", inv_coords.base_x+1, inv_coords.base_y-7, p.inv.c)
+        print(p.bag.affix,inv_coords.base_x-3, inv_coords.base_y-14, p.bag.c)
+        print("bag", inv_coords.base_x+1, inv_coords.base_y-7, p.bag.c)
     end
 
-    print(p.inv.current.." / "..p.inv.capacity, inv_coords.base_x+25, inv_coords.base_y-12, c)
+    print(p.bag.current.." / "..p.bag.capacity, inv_coords.base_x+25, inv_coords.base_y-12, c)
     for k,v in pairs(inv) do
         print(v.disp, v.x, v.y, c)
         print(v.amt, v.x+inv_coords.x_off, v.y, c)
     end
-
-    -- x = inv_coords.base_x
-    -- y = inv_coords.base_y
-    -- for i=1,#p.inventory do
-    --     print(p.inventory[i].disp, x, y, c)
-    --     -- spr(p.inventory[i].s,x,y)
-        
-    --     print(p.inventory[i].amt, x+inv_coords.x_off, y, c)
-    --     y+= inv_coords.y_off
-    -- end
 end
 
 function draw_stash(c)
@@ -653,7 +643,7 @@ function transaction_update()
         show_final_transaction()
     end
     if (btnp(4)) then
-        p.cursor.items = items.artifacts -- back to baseline
+        p.cursor.items = items.artifact -- back to baseline
         show_bsl()
     end
 end
@@ -705,24 +695,24 @@ function calc_trans_buy()
     local all = money:afford(p.cursor.items.curr)
     local mid = flr(all/2)
 
-    local remaining_space = p.inv.capacity - p.inv.current
+    local remaining_space = p.bag.capacity - p.bag.current
 
     if mid > remaining_space then
-        if p.inv.capacity == p.inv.current then
+        if p.bag.capacity == p.bag.current then
             mid = 0
         else
             mid = flr(remaining_space/2)
         end
     end
     if all > remaining_space then
-        all = p.inv.capacity - p.inv.current
+        all = p.bag.capacity - p.bag.current
     end
     return mid,all
 end
 
 function calc_trans_sell()
-    local mid = flr(p.inventory[p.cursor.items.pos].amt/2)
-    local all = p.inventory[p.cursor.items.pos].amt
+    local mid = flr(inv[p.cursor.items.disp].amt/2)
+    local all = inv[p.cursor.items.disp].amt
 
     return mid, all
 end
@@ -785,10 +775,10 @@ function adjust_update()
     if(btnp(5)) then
         if p.inf_trans.buying then
             money:buy(p.inf_trans.amt, p.cursor.items.curr)
-            p.inventory[p.cursor.items.pos].amt += p.inf_trans.amt
+            inv[p.cursor.items.disp].amt += p.inf_trans.amt
         else
             money:sell(p.inf_trans.amt,p.cursor.items.curr)
-            p.inventory[p.cursor.items.pos].amt -= p.inf_trans.amt
+            inv[p.cursor.items.disp].amt -= p.inf_trans.amt
         end
         p.inf_trans.buying = false
         p.inf_trans.selling = false
@@ -806,17 +796,17 @@ item_coords = {
 
 -- indexes match the 'pos' field in the items table
 i_menu_map = {
-    "artifacts",
-    "wands",
+    "artifact",
+    "wand",
     "armor",
-    "weapons",
-    "scrolls",
-    "potions"
+    "weapon",
+    "scroll",
+    "potion"
 }
 
-items = {
-    artifacts={
-        disp="artifacts",
+items={
+    artifact={
+        disp="artifact",
         x=item_coords.base_x,
         y=item_coords.base_y,
         low=1500,
@@ -824,8 +814,8 @@ items = {
         curr=0,
         pos=1
     },
-    wands={
-        disp="wands",
+    wand={
+        disp="wand",
         x=item_coords.base_x,
         y=item_coords.base_y+item_coords.y_off,
         low=500,
@@ -842,8 +832,8 @@ items = {
         curr=0,
         pos=3
     },
-    weapons={
-        disp="weapons",
+    weapon={
+        disp="weapon",
         x=item_coords.base_x+item_coords.x_off+18,
         y=item_coords.base_y,
         low=30,
@@ -851,8 +841,8 @@ items = {
         curr=0,
         pos=4
     },
-    scrolls={
-        disp="scrolls",
+    scroll={
+        disp="scroll",
         x=item_coords.base_x+item_coords.x_off+18,
         y=item_coords.base_y+item_coords.y_off,
         low=7,
@@ -860,8 +850,8 @@ items = {
         curr=0,
         pos=5
     },
-    potions={
-        disp="potions",
+    potion={
+        disp="potion",
         x=item_coords.base_x+item_coords.x_off+18,
         y=item_coords.base_y+item_coords.y_off*2,
         low=1,
@@ -888,20 +878,20 @@ function draw_prices(c, money_check)
     -- todo: implement highlighting for inventory space
     money_check = money_check or false
 
-    if money.thousands == 0 and money.ones/items.artifacts.curr < 1 and money_check then
-        print(items.artifacts.disp, items.artifacts.x, items.artifacts.y,8)
-        print(items.artifacts.curr, item_coords.x_off, items.artifacts.y,8)
+    if money.thousands == 0 and money.ones/items.artifact.curr < 1 and money_check then
+        print(items.artifact.disp, items.artifact.x, items.artifact.y,8)
+        print(items.artifact.curr, item_coords.x_off, items.artifact.y,8)
     else
-        print(items.artifacts.disp, items.artifacts.x, items.artifacts.y,c)
-        print(items.artifacts.curr, item_coords.x_off, items.artifacts.y,c)
+        print(items.artifact.disp, items.artifact.x, items.artifact.y,c)
+        print(items.artifact.curr, item_coords.x_off, items.artifact.y,c)
     end
 
-    if money.thousands == 0 and money.ones/items.wands.curr < 1 and money_check then
-        print(items.wands.disp, items.wands.x, items.wands.y,8)
-        print(items.wands.curr, item_coords.x_off, items.wands.y,8)
+    if money.thousands == 0 and money.ones/items.wand.curr < 1 and money_check then
+        print(items.wand.disp, items.wand.x, items.wand.y,8)
+        print(items.wand.curr, item_coords.x_off, items.wand.y,8)
     else
-        print(items.wands.disp, items.wands.x, items.wands.y,c)
-        print(items.wands.curr, item_coords.x_off, items.wands.y,c)
+        print(items.wand.disp, items.wand.x, items.wand.y,c)
+        print(items.wand.curr, item_coords.x_off, items.wand.y,c)
     end
 
     if money.thousands == 0 and money.ones/items.armor.curr < 1 and money_check then
@@ -912,28 +902,28 @@ function draw_prices(c, money_check)
         print(items.armor.curr, item_coords.x_off, items.armor.y,c)
     end
 
-    if money.thousands == 0 and money.ones/items.weapons.curr < 1 and money_check then    
-        print(items.weapons.disp, items.weapons.x, items.weapons.y,8)
-        print(items.weapons.curr, (item_coords.x_off*2)+10, items.weapons.y,8)
+    if money.thousands == 0 and money.ones/items.weapon.curr < 1 and money_check then    
+        print(items.weapon.disp, items.weapon.x, items.weapon.y,8)
+        print(items.weapon.curr, (item_coords.x_off*2)+10, items.weapon.y,8)
     else
-        print(items.weapons.disp, items.weapons.x, items.weapons.y,c)
-        print(items.weapons.curr, (item_coords.x_off*2)+10, items.weapons.y,c)
+        print(items.weapon.disp, items.weapon.x, items.weapon.y,c)
+        print(items.weapon.curr, (item_coords.x_off*2)+10, items.weapon.y,c)
     end
 
-    if money.thousands == 0 and money.ones/items.scrolls.curr < 1 and money_check then    
-        print(items.scrolls.disp, items.scrolls.x, items.scrolls.y,8)
-        print(items.scrolls.curr, (item_coords.x_off*2)+10, items.scrolls.y,8)
+    if money.thousands == 0 and money.ones/items.scroll.curr < 1 and money_check then    
+        print(items.scroll.disp, items.scroll.x, items.scroll.y,8)
+        print(items.scroll.curr, (item_coords.x_off*2)+10, items.scroll.y,8)
     else
-        print(items.scrolls.disp, items.scrolls.x, items.scrolls.y,c)
-        print(items.scrolls.curr, (item_coords.x_off*2)+10, items.scrolls.y,c)
+        print(items.scroll.disp, items.scroll.x, items.scroll.y,c)
+        print(items.scroll.curr, (item_coords.x_off*2)+10, items.scroll.y,c)
     end
 
-    if money.thousands == 0 and money.ones/items.potions.curr < 1 and money_check then    
-        print(items.potions.disp, items.potions.x, items.potions.y,8)
-        print(items.potions.curr, (item_coords.x_off*2)+10, items.potions.y,8)
+    if money.thousands == 0 and money.ones/items.potion.curr < 1 and money_check then    
+        print(items.potion.disp, items.potion.x, items.potion.y,8)
+        print(items.potion.curr, (item_coords.x_off*2)+10, items.potion.y,8)
     else
-        print(items.potions.disp, items.potions.x, items.potions.y,c)
-        print(items.potions.curr, (item_coords.x_off*2)+10, items.potions.y,c)
+        print(items.potion.disp, items.potion.x, items.potion.y,c)
+        print(items.potion.curr, (item_coords.x_off*2)+10, items.potion.y,c)
     end
 end
 
