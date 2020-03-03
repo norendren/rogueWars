@@ -21,9 +21,10 @@ draw_inv_stash = false
 function _init()
     -- show_menu()
     -- show_intro()
-    -- show_navigation()
+    -- show_home_select()
+    show_navigation()
     -- show_bsl()
-    show_stash()
+    -- show_stash()
     -- show_stash_transfer()
     -- show_transaction()
     -- show_final_transaction()
@@ -139,7 +140,7 @@ end
 
 function intro_update()
     if (btnp(5)) then
-        show_navigation()
+        show_home_select()
     end
 end
 
@@ -147,6 +148,36 @@ function intro_draw()
     -- todo: add help text and home roguelike
     long_printer(intro, 0, 7)
     print("press x to play", 30, 100, 7)
+end
+
+function show_home_select()
+    draw_inv_stash = false
+    -- end that show only once for each roguelike
+    scrn.upd = home_update
+    scrn.drw = home_draw
+end
+test={curr=1}
+function home_draw()
+    print("please select a home roguelike", 3, 2, 7)
+    local y=35
+    local pos=1
+    for d in all(nav_map) do
+        local title=nav_menu[d].full or nav_menu[d].title
+        print(title, hcenter(title),y,nav_menu[d].c)
+        test[d] = {x=hcenter(title),y=y,pos=pos}
+        pos+=1
+        y+=10
+    end
+    spr(0,test[nav_map[test.curr]].x-10,test[nav_map[test.curr]].y-1)
+end
+
+function home_update()
+    if btnp(2) and test.curr > 1 then test.curr-=1 end
+    if btnp(3) and test.curr < 6 then test.curr+=1 end
+    if btnp(5) then 
+        nav_menu.home = nav_menu[nav_map[test.curr]]
+        show_navigation()
+    end
 end
 
 -- locking y values for top and bottom half
@@ -159,9 +190,10 @@ nav_coords = {
     x_off = 55,
     y_off = 8
 }
-nav_map = {"adom","dcss","net","brogue","cog","gkh"}
-nav_menu = {
+nav_map={"adom","dcss","net","brogue","cog","gkh"}
+nav_menu={
     home={},
+    visit={},
     adom={
         title="adom",
         full="ancient domains of mystery",
@@ -353,8 +385,8 @@ stash={
 }
 
 money = {
-    ones=500,
-    thousands=0,
+    ones=0,
+    thousands=5,
     buy=function(self, amt, price)
         for i=1,amt do
             self.ones -= price
@@ -417,6 +449,17 @@ function nav_draw()
     -- home
     local home = nav_menu.home
     spr(10,home.x+#home.title*4+2, home.y-2)
+
+    -- most recent dungeon
+    local v=nav_menu.visit
+    if v.title != nil then
+        if v == nav_menu.home then
+            local x=home.x+#home.title*4+2
+            spr(9,x+6, home.y-2)
+        else
+            spr(9,v.x+#v.title*4,v.y-1)
+        end
+    end
 end
 
 function nav_update()
@@ -434,7 +477,8 @@ function nav_update()
     if (btnp(3)) and curs < 6 then
         p.cursor.nav = nav_menu[nav_map[curs+1]]
     end
-    if (btnp(5)) then
+    if (btnp(5)) and p.cursor.nav != nav_menu.visit then
+        for k,d in pairs(nav_menu) do d.visit = false end
         handle_home(p.cursor.nav == nav_menu.home)
         show_bsl()
     end
@@ -488,11 +532,19 @@ function handle_home(arriving)
     p.cursor.bsl = bsl.buy
 end
 
+function pad(i)
+    local pad = ""
+    if i < 100 then pad=pad.."0" end
+    if i < 10 then pad=pad.."0" end
+    return pad
+end
+
 function draw_inventory(c)
     if money.thousands == 0 then
         print("$ "..money.ones, 92, 2, c)
     else
-        print("$ "..money.thousands..money.ones, 92, 2, c)
+        -- gotta pad the ones in cases where < 100 or < 10
+        print("$ "..money.thousands..pad(money.ones)..money.ones, 92, 2, c)
     end
 
     if p.bag.affix == "" then
@@ -556,6 +608,7 @@ function bsl_update()
             if aut == 0 then
                 -- show game over
             end
+            nav_menu.visit = p.cursor.nav
             p.cursor.bsl = bsl.buy
             randomize_prices()
             show_navigation() 
