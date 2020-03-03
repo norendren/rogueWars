@@ -13,16 +13,17 @@ __lua__
     pretty up intro screen and get scrolling text  
 ]]
 
-frame = 0
+frame=0
+scroll=0
 scrn = {}
 aut = 30
 draw_inv_stash = false
 
 function _init()
     -- show_menu()
-    -- show_intro()
+    show_intro()
     -- show_home_select()
-    show_navigation()
+    -- show_navigation()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()
@@ -40,6 +41,19 @@ function _init()
     calc_inventory()
     randomize_prices()
     equip_coords()
+
+    
+    
+    --preprocess intro text
+    local curr = 1
+    local new_s = ""
+    for i=1,#intro do
+        if sub(intro,i,i) == "\n" then
+            new_s = new_s..sub(intro, curr, i-1).." "
+            curr = i+1
+        end
+    end
+    intro = new_s
 end
 
 function equip_coords()
@@ -105,8 +119,6 @@ function _draw()
     --full border
     -- rect(0,0,127,127,14)
     scrn.drw()
-    frame += 1
-    frame = frame%20
 end
 
 function show_menu()
@@ -132,7 +144,7 @@ end
 function show_intro()
     -- todo: create intro texts-- if (btnp(5)) then
     draw_inv_stash = false
-        
+    frame = 0
     -- end that show only once for each roguelike
     scrn.upd = intro_update
     scrn.drw = intro_draw
@@ -146,7 +158,9 @@ end
 
 function intro_draw()
     -- todo: add help text and home roguelike
-    long_printer(intro, 0, 7)
+    local part=sub(intro,1,scroll)
+    long_printer(part, 0, 7)
+    scroll+=2
     print("press x to play", 30, 100, 7)
 end
 
@@ -156,7 +170,8 @@ function show_home_select()
     scrn.upd = home_update
     scrn.drw = home_draw
 end
-test={curr=1}
+-- holder for home selection
+h={curr=1}
 function home_draw()
     print("please select a home roguelike", 3, 2, 7)
     local y=35
@@ -164,18 +179,18 @@ function home_draw()
     for d in all(nav_map) do
         local title=nav_menu[d].full or nav_menu[d].title
         print(title, hcenter(title),y,nav_menu[d].c)
-        test[d] = {x=hcenter(title),y=y,pos=pos}
+        h[d] = {x=hcenter(title),y=y,pos=pos}
         pos+=1
         y+=10
     end
-    spr(0,test[nav_map[test.curr]].x-10,test[nav_map[test.curr]].y-1)
+    spr(0,h[nav_map[h.curr]].x-10,h[nav_map[h.curr]].y-1)
 end
 
 function home_update()
-    if btnp(2) and test.curr > 1 then test.curr-=1 end
-    if btnp(3) and test.curr < 6 then test.curr+=1 end
+    if btnp(2) and h.curr > 1 then h.curr-=1 end
+    if btnp(3) and h.curr < 6 then h.curr+=1 end
     if btnp(5) then 
-        nav_menu.home = nav_menu[nav_map[test.curr]]
+        nav_menu.home = nav_menu[nav_map[h.curr]]
         show_navigation()
     end
 end
