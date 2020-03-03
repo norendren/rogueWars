@@ -15,9 +15,7 @@ __lua__
 
 frame = 0
 scrn = {}
-
 aut = 30
-
 draw_inv_stash = false
 
 function _init()
@@ -37,6 +35,26 @@ function _init()
     handle_home(p.cursor.nav == nav_menu.home)
     calc_inventory()
     randomize_prices()
+    equip_coords()
+end
+
+function equip_coords()
+    -- inventory
+    local x = inv_coords.base_x
+    local y = inv_coords.base_y
+    for item in all(inv_map) do
+        inv[item].x = x
+        inv[item].y = y
+        y+= inv_coords.y_off
+    end
+
+    x = stash_coords.base_x
+    y = stash_coords.base_y
+    for item in all(inv_map) do
+        stash[item].x=x
+        stash[item].y=y
+        y+= stash_coords.y_off
+    end
 end
 
 function calc_inventory()
@@ -66,13 +84,16 @@ function _draw()
         draw_rects(p.cursor.nav.c)
         local a = aut.." aut"
         print(a,hcenter(a),2,7)
-        print("icebox", 2, 2, 7)
-        print("(5hp)", 28, 2, 7)
+
+        -- health
+        spr(7,32,1)
+        print("5", 28, 2, 7)
 
         draw_inventory(7)
         draw_stash(7)
     end
-    rect(0,0,127,127,14)
+    --full border
+    -- rect(0,0,127,127,14)
     scrn.drw()
     frame += 1
     frame = frame%20
@@ -179,17 +200,17 @@ nav_menu = {
     }
 }
 
-inv_coords = {
+inv_coords={
     base_x=72,
     base_y=top_half_y,
     x_off=45,
-    y_off = 7
+    y_off = 8
 }
 stash_coords = {
     base_x=5,
     base_y=top_half_y,
     x_off=45,
-    y_off = 7
+    y_off = 8
 }
 
 bsl_map = {"buy","sell","leave"}
@@ -265,6 +286,74 @@ p = {
     {disp="scrolls",amt=0},
     {disp="potions",amt=0}}
 }
+
+inv_map={"artifact","wand","armor","weapon","scroll","potion"}
+inv={
+    artifact={
+        disp="artifacts",
+        amt=0,
+        pos=1
+    },
+    wand={
+        disp="wands",
+        amt=0,
+        pos=2
+    },
+    armor={
+        disp="armor",
+        amt=0,
+        pos=3
+    },
+    weapon={
+        disp="weapons",
+        amt=0,
+        pos=4
+    },
+    scroll={
+        disp="scrolls",
+        amt=0,
+        pos=5
+    },
+    potion={
+        disp="potions",
+        amt=0,
+        pos=6
+    }
+}
+
+stash={
+    artifact={
+        disp="artifacts",
+        amt=0,
+        pos=1
+    },
+    wand={
+        disp="wands",
+        amt=0,
+        pos=2
+    },
+    armor={
+        disp="armor",
+        amt=0,
+        pos=3
+    },
+    weapon={
+        disp="weapons",
+        amt=0,
+        pos=4
+    },
+    scroll={
+        disp="scrolls",
+        amt=0,
+        pos=5
+    },
+    potion={
+        disp="potions",
+        amt=0,
+        pos=6
+    }
+}
+
 money = {
     ones=500,
     thousands=0,
@@ -414,26 +503,29 @@ function draw_inventory(c)
         print(p.inv.affix,inv_coords.base_x-3, inv_coords.base_y-14, p.inv.c)
         print("bag", inv_coords.base_x+1, inv_coords.base_y-7, p.inv.c)
     end
+
     print(p.inv.current.." / "..p.inv.capacity, inv_coords.base_x+25, inv_coords.base_y-12, c)
-    x = inv_coords.base_x
-    y = inv_coords.base_y
-    for i=1,#p.inventory do
-        print(p.inventory[i].disp, x, y, c)
-        -- spr(p.inventory[i].s,x,y)
-        
-        print(p.inventory[i].amt, x+inv_coords.x_off, y, c)
-        y+= inv_coords.y_off
+    for k,v in pairs(inv) do
+        print(v.disp, v.x, v.y, c)
+        print(v.amt, v.x+inv_coords.x_off, v.y, c)
     end
+
+    -- x = inv_coords.base_x
+    -- y = inv_coords.base_y
+    -- for i=1,#p.inventory do
+    --     print(p.inventory[i].disp, x, y, c)
+    --     -- spr(p.inventory[i].s,x,y)
+        
+    --     print(p.inventory[i].amt, x+inv_coords.x_off, y, c)
+    --     y+= inv_coords.y_off
+    -- end
 end
 
 function draw_stash(c)
-    print("stash", stash_coords.base_x+3, stash_coords.base_y-12, 7)
-    x = stash_coords.base_x
-    y = stash_coords.base_y
-    for i=1,#p.inventory do
-        print(p.stash[i].disp, x, y, 7)
-        print(p.stash[i].amt, x+stash_coords.x_off, y)
-        y+= stash_coords.y_off
+    print("stash", stash_coords.base_x+3, stash_coords.base_y-12, c)
+    for k,v in pairs(stash) do
+        print(v.disp, v.x, v.y, c)
+        print(v.amt, v.x+stash_coords.x_off, v.y, c)
     end
 end
 
@@ -477,6 +569,8 @@ function bsl_update()
             p.cursor.bsl = bsl.buy
             randomize_prices()
             show_navigation() 
+        elseif p.cursor.bsl.title == "stash" then
+            show_stash()
         else
             show_transaction()
         end
@@ -487,6 +581,31 @@ function draw_bsl(c)
     for k,v in pairs(bsl) do
             print(v.title,v.x,bsl_y,c)
     end
+end
+
+function show_stash()
+    draw_inv_stash = true
+    scrn.drw = stash_draw
+    scrn.upd = stash_update
+end
+
+function stash_draw()
+    draw_prices(7)
+    draw_bsl(7)
+
+    -- indicator for buy/sell mode
+    rect(
+        p.cursor.bsl.x-3,
+        bsl_y-3,
+        (p.cursor.bsl.x-3)+#p.cursor.bsl.title*5.5,
+        (bsl_y-3) + 10,
+        7)
+    
+    -- player cursor
+    spr(0,p.cursor.items.x-10,p.cursor.items.y-1)
+end
+
+function stash_update()
 end
 
 function show_transaction()
@@ -754,10 +873,10 @@ items = {
 
 function draw_rects(c)
     -- stash
-    rect(0,9,60,70,c)
+    rect(0,9,60,73,c)
 
     -- inventory
-    rect(67,9,127,70,c)
+    rect(67,9,127,73,c)
     
     -- bottom half
     local title = p.cursor.nav.full or p.cursor.nav.title
@@ -819,14 +938,14 @@ function draw_prices(c, money_check)
 end
 
 __gfx__
-00000000000cc00000000ccc00044000600000064ffffff400044000000b000000888000000cc000000400000000500000000000000000000000000000000000
-00a0000000c77c00000000cc00444400060000600f00f0f00074470000bbb00000888000000cc000004440000555555500000000000000000000000000000000
-00a666600ca77ac000004a0c04444440006006000ffffff0077887700bbbbb00008880000004a0000444440005ccccc500000000000000000000000000000000
-44a66666c77aa77c0004a40044455444000660000f0000f077788777bbbbbbb000888000000a400044444440055ccc5500000000000000000000000000000000
-00a66660c77aa77c004a4000444554440a0660a00ffffff07888888700bbb000888888800004a0000fffff00005ccc5000000000000000000000000000000000
-00a000000ca77ac004a400000444444000a00a000f0f00f07778877700bbb00008888800000a40000fcfff000055c55000000000000000000000000000000000
-0000000000c77c004a40000000444400040aa0400ffffff07778877700bbb000008880000004a0000fff4f000005c50000000000000000000000000000000000
-00000000000cc000a400000000044000400000044ffffff40777777000bbb00000080000000a40000fff4f000005550000000000000000000000000000000000
+00000000000cc00000000ccc00044000600000064ffffff4000440000080008000888000000cc000000400000000500000000000000000000000000000000000
+00a0000000c77c00000000cc00444400060000600f00f0f0007447000888088800888000000cc000004440000555555500000000000000000000000000000000
+00a666600ca77ac000004a0c04444440006006000ffffff00778877008888888008880000004a0000444440005ccccc500000000000000000000000000000000
+44a66666c77aa77c0004a40044455444000660000f0000f0777887770888888800888000000a400044444440055ccc5500000000000000000000000000000000
+00a66660c77aa77c004a4000444554440a0660a00ffffff07888888708888888888888800004a0000fffff00005ccc5000000000000000000000000000000000
+00a000000ca77ac004a400000444444000a00a000f0f00f0777887770088888008888800000a40000fcfff000055c55000000000000000000000000000000000
+0000000000c77c004a40000000444400040aa0400ffffff07778877700088800008880000004a0000fff4f000005c50000000000000000000000000000000000
+00000000000cc000a400000000044000400000044ffffff4077777700000800000080000000a40000fff4f000005550000000000000000000000000000000000
 __label__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
