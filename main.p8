@@ -170,7 +170,7 @@ function update_intro()
             if btnp(i) then scroll=#intro end
         end
     end
-    if (btnp(5)) and scroll!=#intro then
+    if (btnp(5)) and scroll>len then
         show_home_select()
     end
 end
@@ -342,7 +342,7 @@ function update_rog_intro()
             if btnp(i) then scroll=len end
         end
     end
-    if (btnp(5)) and scroll!=len then
+    if btnp(5) and scroll>len then
         p.cursor.nav.visited=true
         show_bsl()
     end
