@@ -2,7 +2,8 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 #include strings.p8
-#include temp.p8
+#include player.p8
+#include item_render.p8
 
 --[[
     loan system?
@@ -21,10 +22,10 @@ aut = 30
 draw_inv_stash = false
 
 function _init()
-    -- show_menu()
+    show_menu()
     -- show_intro()
     -- show_home_select()
-    show_navigation()
+    -- show_navigation()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()
@@ -61,7 +62,7 @@ function equip_coords()
     local x=inv_coords.base_x
     local y=inv_coords.base_y
     local sp=1
-    for item in all(inv_map) do
+    for item in all(inv_st_map) do
         inv[item].x=x
         inv[item].y=y
         inv[item].sp=sp
@@ -72,7 +73,7 @@ function equip_coords()
     x=stash_coords.base_x
     y=stash_coords.base_y
     sp=1
-    for item in all(inv_map) do
+    for item in all(inv_st_map) do
         stash[item].x=x
         stash[item].y=y
         stash[item].sp = sp
@@ -135,12 +136,13 @@ function draw_menu()
     if frame < 10 then
         print("press x to start", 30, 100, 7)
     end
+    frame+=1
+    frame=frame%20
 end
 
 function show_intro()
     -- todo: create intro texts-- if (btnp(5)) then
     draw_inv_stash = false
-    frame = 0
     -- end that show only once for each roguelike
     scrn.upd = update_intro
     scrn.drw = draw_intro
@@ -154,9 +156,11 @@ end
 
 function draw_intro()
     -- todo: add help text and home roguelike
+
     local part=sub(intro,1,scroll)
     long_printer(part, 0, 7)
     scroll+=2
+
     print("press x to play", 30, 100, 7)
 end
 
@@ -313,26 +317,26 @@ function update_stash()
     local pos=p.cursor.stash.pos
     if btnp(0) and in_inventory then
         in_inventory=false
-        p.cursor.stash=stash[inv_map[pos]]
+        p.cursor.stash=stash[inv_st_map[pos]]
     end
     if btnp(1) and not in_inventory then
         in_inventory=true
-        p.cursor.stash=inv[inv_map[pos]]
+        p.cursor.stash=inv[inv_st_map[pos]]
     end
     if btnp(2) and pos >= 1 then
         if pos==1 then pos=7 end
         if in_inventory then
-            p.cursor.stash=inv[inv_map[pos-1]]
+            p.cursor.stash=inv[inv_st_map[pos-1]]
         else
-            p.cursor.stash=stash[inv_map[pos-1]]
+            p.cursor.stash=stash[inv_st_map[pos-1]]
         end
     end
     if btnp(3) and pos <= 6 then
         if pos==6 then pos=0 end
         if in_inventory then
-            p.cursor.stash=inv[inv_map[(pos+1)]]
+            p.cursor.stash=inv[inv_st_map[(pos+1)]]
         else
-            p.cursor.stash=stash[inv_map[(pos+1)]]
+            p.cursor.stash=stash[inv_st_map[(pos+1)]]
         end
     end
     if btnp(4) then
@@ -351,8 +355,6 @@ function show_stash_transfer()
 end
 
 function draw_stash_transfer()
-    -- render_prices(7)
-    -- render_bsl(7)
     if in_inventory then
         print("transfer "..p.cursor.stash.disp.."s to stash",item_coords.base_x, item_coords.base_y, 7)
         print("⬆️⬇️ = 1",item_coords.base_x, item_coords.base_y+7, 7)
@@ -364,7 +366,6 @@ function draw_stash_transfer()
     end
 
     print(p.inf_trans.amt, 62, trans_menu.y, 7)
-    
     -- player cursor
     local x=p.cursor.stash.x
     local y=p.cursor.stash.y
@@ -417,10 +418,10 @@ function update_stash_transfer()
 
     if(btnp(5)) then
         if in_inventory then
-            stash[inv_map[pos]].amt += p.inf_trans.amt
+            stash[inv_st_map[pos]].amt += p.inf_trans.amt
             p.cursor.stash.amt -= p.inf_trans.amt
         else
-            inv[inv_map[pos]].amt += p.inf_trans.amt
+            inv[inv_st_map[pos]].amt += p.inf_trans.amt
             p.cursor.stash.amt -= p.inf_trans.amt
         end
         calc_inventory()
@@ -458,16 +459,16 @@ function update_trans_select()
     local curs = p.cursor.items.pos
 
     if (btnp(0)) and curs > 3 then
-        p.cursor.items = items[i_menu_map[curs-3]]
+        p.cursor.items = items[item_map[curs-3]]
     end
     if (btnp(1)) and curs <= 3 then
-        p.cursor.items = items[i_menu_map[curs+3]]
+        p.cursor.items = items[item_map[curs+3]]
     end
     if (btnp(2)) and curs > 1 then
-        p.cursor.items = items[i_menu_map[curs-1]]
+        p.cursor.items = items[item_map[curs-1]]
     end
     if (btnp(3)) and curs < 6 then
-        p.cursor.items = items[i_menu_map[curs+1]]
+        p.cursor.items = items[item_map[curs+1]]
     end
     if (btnp(5)) then
         show_trans_opts()
