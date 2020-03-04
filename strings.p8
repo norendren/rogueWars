@@ -13,6 +13,10 @@ function hcenter(s)
     return 64-#s*2
 end
 
+function vcenter()
+    return 61
+end
+
 -- iterate over string finding spaces until reaching max index and pick space closest to max index and chop the string
 function long_printer(msg, y, col)
     -- TODO: add fancy printing so it scrolls like a cursor
