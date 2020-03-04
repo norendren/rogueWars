@@ -18,20 +18,23 @@ __lua__
 frame=0
 scroll=0
 scrn = {}
-aut = 30
+aut = 5
 draw_inv_stash = false
+won=true
+yc=3
 
 function _init()
-    show_menu()
+    -- show_menu()
     -- show_intro()
     -- show_home_select()
-    -- show_navigation()
+    show_navigation()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()
     -- show_trans_select()
     -- show_trans_opts()
     -- show_final_trans()
+    -- show_ending()
 
     p.cursor.nav=nav_menu.adom
     p.cursor.items = items.artifact
@@ -116,6 +119,8 @@ function _draw()
     --full border
     -- rect(0,0,127,127,14)
     scrn.drw()
+    frame+=1
+    frame=frame%20
 end
 
 function show_menu()
@@ -136,14 +141,11 @@ function draw_menu()
     if frame < 10 then
         print("press x to start", 30, 100, 7)
     end
-    frame+=1
-    frame=frame%20
 end
 
 function show_intro()
     -- todo: create intro texts-- if (btnp(5)) then
     draw_inv_stash = false
-    -- end that show only once for each roguelike
     scrn.upd = update_intro
     scrn.drw = draw_intro
 end
@@ -156,12 +158,36 @@ end
 
 function draw_intro()
     -- todo: add help text and home roguelike
-
     local part=sub(intro,1,scroll)
     long_printer(part, 0, 7)
     scroll+=2
 
     print("press x to play", 30, 100, 7)
+end
+
+function show_ending()
+    draw_inv_stash = false
+    scrn.drw = draw_ending
+    scrn.upd = update_ending
+end
+
+function draw_ending()
+    local l="you lost..game over man!!!"
+    local w="you won the game, grats"
+
+    if won then
+        print(w, hcenter(w),50,7)
+    else
+        print(l, hcenter(l),50,7)
+    end
+
+    if frame < 10 then
+        print("press x to play again", hcenter("press x to play again"),110,7)
+    end
+end
+
+function update_ending()
+    if btnp(5) then show_menu() end
 end
 
 function show_home_select()
@@ -206,6 +232,12 @@ function draw_nav()
     -- dungeon selection
     render_rog_select(7)
 
+    if won then
+        print(yendor.title,yendor.x,yendor.y,yc)
+        if frame%3==0 then yc+=1 yc=yc%16 end
+        if p.cursor.nav==yendor then render_rects(yc) end
+    end
+
     -- player cursor
     spr(0,p.cursor.nav.x-10,p.cursor.nav.y-1)
 
@@ -225,6 +257,14 @@ function draw_nav()
     end
 end
 
+yendor={
+    title="mysterious portal",
+    x=25,
+    y=118,
+    pos=7,
+    c=yc
+}
+
 function update_nav()
     local curs = p.cursor.nav.pos
 
@@ -235,10 +275,21 @@ function update_nav()
         p.cursor.nav = nav_menu[nav_map[curs+3]]
     end
     if (btnp(2)) and curs > 1 then
-        p.cursor.nav = nav_menu[nav_map[curs-1]]
+        if p.cursor.nav==yendor then
+            p.cursor.nav=nav_menu[nav_map[3]]
+        else
+            p.cursor.nav = nav_menu[nav_map[curs-1]]
+        end
     end
-    if (btnp(3)) and curs < 6 then
-        p.cursor.nav = nav_menu[nav_map[curs+1]]
+    if (btnp(3)) and curs <= 6 then
+        if won and (curs==6 or curs==3) then
+            p.cursor.nav = yendor
+        elseif p.cursor.nav==yendor then
+            return
+        elseif curs<6 then
+            p.cursor.nav = nav_menu[nav_map[curs+1]]
+        end
+        
     end
     if (btnp(5)) and p.cursor.nav != nav_menu.visit then
         for k,d in pairs(nav_menu) do d.visit = false end
@@ -275,7 +326,8 @@ function update_bsl()
         if p.cursor.bsl.title == "leave" then
             aut-=1
             if aut == 0 then
-                -- show game over
+                show_ending()
+                return
             end
             nav_menu.visit = p.cursor.nav
             p.cursor.bsl = bsl.buy
