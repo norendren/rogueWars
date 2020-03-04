@@ -67,7 +67,7 @@ function render_inv(c)
 end
 
 money={
-    ones=1,
+    ones=0,
     thousands=5,
     tostr=function(self)
         local s=""
