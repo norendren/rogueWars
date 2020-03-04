@@ -139,14 +139,15 @@ nav_coords = {
 nav_map={"adom","dcss","net","brogue","cog","gkh"}
 nav_menu={
     home={},
-    visit={},
+    l_visit={},
     adom={
         title="adom",
         full="ancient domains of mystery",
         x=nav_coords.base_x,
         y=nav_coords.base_y,
         c=2,
-        pos=1
+        pos=1,
+        visited=false
     },
     dcss={
         title="dcss",
@@ -154,28 +155,32 @@ nav_menu={
         x=nav_coords.base_x,
         y=nav_coords.base_y+nav_coords.y_off,
         c=9,
-        pos=2
+        pos=2,
+        visited=false
     },
     net={
         title="nethack",
         x=nav_coords.base_x,
         y=nav_coords.base_y+nav_coords.y_off*2,
         c=12,
-        pos=3
+        pos=3,
+        visited=false
     },
     brogue={
         title="brogue",
         x=nav_coords.base_x+nav_coords.x_off,
         y=nav_coords.base_y, 
         c=4,
-        pos=4
+        pos=4,
+        visited=false
     },
     cog={
         title="cogmind", 
         x=nav_coords.base_x+nav_coords.x_off,
         y=nav_coords.base_y+nav_coords.y_off,
         c=11,
-        pos=5
+        pos=5,
+        visited=false
     },
     gkh={
         title="gkh",
@@ -183,7 +188,8 @@ nav_menu={
         x=nav_coords.base_x+nav_coords.x_off,
         y=nav_coords.base_y+nav_coords.y_off*2,
         c=10,
-        pos=6
+        pos=6,
+        visited=false
     }
 }
 

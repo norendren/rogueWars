@@ -4,6 +4,7 @@ __lua__
 #include strings.p8
 #include player.p8
 #include item_render.p8
+#include events.p8
 
 --[[
     full reset after loss/victory
@@ -14,6 +15,7 @@ __lua__
 
 frame=0
 scroll=0
+scroll_speed=1
 scrn = {}
 aut = 20
 draw_inv_stash = false
@@ -23,9 +25,9 @@ yc=3
 
 function _init()
     -- show_menu()
-    show_intro()
+    -- show_intro()
     -- show_home_select()
-    -- show_navigation()
+    show_navigation()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()
@@ -46,16 +48,17 @@ function _init()
     randomize_prices()
     equip_coords()
 
-    --preprocess intro text (placeholder for others)
-    local curr = 1
-    local new_s = ""
-    for i=1,#intro do
-        if sub(intro,i,i) == "\n" then
-            new_s = new_s..sub(intro, curr, i-1).." "
-            curr = i+1
-        end
-    end
-    intro = new_s
+    -- restructure strings to fit the window
+    init_rog_intro()
+end
+
+function init_rog_intro()
+    nav_menu.adom.intro=preprocess(adom)
+    nav_menu.dcss.intro=preprocess(dcss)
+    nav_menu.net.intro=preprocess(net)
+    nav_menu.brogue.intro=preprocess(brogue)
+    nav_menu.cog.intro=preprocess(cog)
+    nav_menu.gkh.intro=preprocess(gkh)
 end
 
 function equip_coords()
@@ -152,14 +155,16 @@ end
 function draw_intro()
     -- todo: add help text and home roguelike
     local part=sub(intro,1,scroll)
-    long_printer(part, 0, 7)
-    scroll+=1
+    print(part,0,2,7)
+    scroll+=scroll_speed
 
-    print("press x to play", 30, 100, 7)
+    if scroll>=#intro and frame>10 then
+        print("press x to play", 30, 100, 7)
+    end
 end
 
 function update_intro()
-    -- great short circuit here
+    -- great short circuit here!
     if scroll < #intro then
         for i=0,5 do
             if btnp(i) then scroll=#intro end
@@ -251,7 +256,7 @@ function draw_nav()
     spr(10,home.x+#home.title*4+2, home.y-2)
 
     -- most recent dungeon
-    local v=nav_menu.visit
+    local v=nav_menu.l_visit
     if v.title != nil then
         if v == nav_menu.home then
             local x=home.x+#home.title*4+2
@@ -296,10 +301,49 @@ function update_nav()
         end
         
     end
-    if (btnp(5)) and p.cursor.nav != nav_menu.visit then
+    if (btnp(5)) and p.cursor.nav != nav_menu.l_visit then
+        for k,d in pairs(nav_menu) do d.l_visit = false end
         if p.cursor.nav==yendor then show_ending() return end
-        for k,d in pairs(nav_menu) do d.visit = false end
+
         handle_home(p.cursor.nav == nav_menu.home)
+
+        if p.cursor.nav.visited==false then show_rog_intro() return end
+
+        show_bsl()
+    end
+end
+
+function show_rog_intro()
+    draw_inv_stash = false
+    scroll=0
+
+    scrn.drw = draw_rog_intro
+    scrn.upd = update_rog_intro
+end
+
+function draw_rog_intro()
+    local cur=p.cursor.nav
+    local title=cur.full or cur.title
+    rect(0,0,127,127,cur.c)
+
+    print(title,hcenter(title),4,cur.c)
+
+    print(sub(cur.intro,1,scroll),4,15,7)
+    scroll+=scroll_speed
+
+    local continue="press x to continue"
+    print(continue,hcenter(continue),110,7)
+end
+
+function update_rog_intro()
+    local len=#p.cursor.nav.intro
+    if scroll < len then
+        for i=0,5 do
+            if btnp(i) then scroll=len end
+        end
+    end
+    if (btnp(5)) and scroll!=len then
+        p.cursor.nav.visited=true
         show_bsl()
     end
 end
@@ -334,7 +378,7 @@ function update_bsl()
             if aut == 0 then show_ending() return end
             if money.thousands >= end_money then won=true end
 
-            nav_menu.visit = p.cursor.nav
+            nav_menu.l_visit = p.cursor.nav
             p.cursor.bsl = bsl.buy
             randomize_prices()
             show_navigation() 
