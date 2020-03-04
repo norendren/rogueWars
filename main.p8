@@ -6,28 +6,26 @@ __lua__
 #include item_render.p8
 
 --[[
-    loan system?
+    full reset after loss/victory
     encounters
     items
-    name character or something? home roguelike
-    refactor, token opt
-    game over screen
-    pretty up intro screen and get scrolling text  
+    pretty up intro screen
 ]]
 
 frame=0
 scroll=0
 scrn = {}
-aut = 5
+aut = 20
 draw_inv_stash = false
-won=true
+won=false
+end_money=200
 yc=3
 
 function _init()
     -- show_menu()
-    -- show_intro()
+    show_intro()
     -- show_home_select()
-    show_navigation()
+    -- show_navigation()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()
@@ -144,25 +142,32 @@ function draw_menu()
 end
 
 function show_intro()
-    -- todo: create intro texts-- if (btnp(5)) then
-    draw_inv_stash = false
-    scrn.upd = update_intro
-    scrn.drw = draw_intro
-end
+    draw_inv_stash=false
+    scroll=0
 
-function update_intro()
-    if (btnp(5)) then
-        show_home_select()
-    end
+    scrn.upd=update_intro
+    scrn.drw=draw_intro
 end
 
 function draw_intro()
     -- todo: add help text and home roguelike
     local part=sub(intro,1,scroll)
     long_printer(part, 0, 7)
-    scroll+=2
+    scroll+=1
 
     print("press x to play", 30, 100, 7)
+end
+
+function update_intro()
+    -- great short circuit here
+    if scroll < #intro then
+        for i=0,5 do
+            if btnp(i) then scroll=#intro end
+        end
+    end
+    if (btnp(5)) and scroll!=#intro then
+        show_home_select()
+    end
 end
 
 function show_ending()
@@ -187,7 +192,7 @@ function draw_ending()
 end
 
 function update_ending()
-    if btnp(5) then show_menu() end
+    if btnp(5) then show_menu() win=false end
 end
 
 function show_home_select()
@@ -292,6 +297,7 @@ function update_nav()
         
     end
     if (btnp(5)) and p.cursor.nav != nav_menu.visit then
+        if p.cursor.nav==yendor then show_ending() return end
         for k,d in pairs(nav_menu) do d.visit = false end
         handle_home(p.cursor.nav == nav_menu.home)
         show_bsl()
@@ -325,10 +331,9 @@ function update_bsl()
     if (btnp(5)) then
         if p.cursor.bsl.title == "leave" then
             aut-=1
-            if aut == 0 then
-                show_ending()
-                return
-            end
+            if aut == 0 then show_ending() return end
+            if money.thousands >= end_money then won=true end
+
             nav_menu.visit = p.cursor.nav
             p.cursor.bsl = bsl.buy
             randomize_prices()
