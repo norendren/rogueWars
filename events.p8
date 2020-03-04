@@ -47,7 +47,7 @@ you better hurry though, before you get removed from the game]]
 net=[[nethack is a land of many dangers both to players and shopkeepers with items too good to pass up.
 players have an annoying habit of constantly asking for the price of things, so you study them well]]
 
-brogue=[[brogue is a world made by making due with what you've got. players pockets overflow with gold they cant spend
+brogue=[[players in brogue usually make due with what they find. their pockets overflow with gold they cant spend
 hopefully you can make a killing here without getting killed]]
 
 cog=[[you step foot into buzzing machine shop filled with lights and sounds you've never seen.
