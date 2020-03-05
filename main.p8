@@ -12,22 +12,25 @@ __lua__
     items
     pretty up intro screen
 ]]
+scrn = {}
 
 frame=0
 scroll=0
 scroll_speed=1
-scrn = {}
+
 aut = 20
+
 draw_inv_stash = false
 won=false
+
 end_money=200
-yc=3
+event_chance=80
 
 function _init()
-    show_menu()
+    -- show_menu()
     -- show_intro()
     -- show_home_select()
-    -- show_navigation()
+    show_navigation()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()
@@ -42,6 +45,10 @@ function _init()
     p.cursor.trans=trans_menu.middle
     p.cursor.stash=inv.artifact
 
+    -- debug options
+    inv.artifact.amt=20
+    money.thousands=5
+
     nav_menu.home = nav_menu.adom
     handle_home(p.cursor.nav == nav_menu.home)
     calc_inventory()
@@ -54,6 +61,15 @@ end
 
 function init_rog_intro()
     intro=preprocess(intro)
+
+    for k,item in pairs(item_events) do
+        item.high=preprocess(item.high)
+        item.low=preprocess(item.low)
+    end
+
+    -- t.text=preprocess(t.text)
+    o.text=preprocess(o.text)
+
     nav_menu.adom.intro=preprocess(adom)
     nav_menu.dcss.intro=preprocess(dcss)
     nav_menu.net.intro=preprocess(net)
@@ -268,6 +284,7 @@ function draw_nav()
     end
 end
 
+yc=3
 yendor={
     title="mysterious portal",
     x=25,
@@ -275,7 +292,6 @@ yendor={
     pos=7,
     c=yc
 }
-
 function update_nav()
     local curs = p.cursor.nav.pos
 
@@ -304,12 +320,50 @@ function update_nav()
     end
     if (btnp(5)) and p.cursor.nav != nav_menu.l_visit then
         for k,d in pairs(nav_menu) do d.l_visit = false end
+
         if p.cursor.nav==yendor then show_ending() return end
 
-        handle_home(p.cursor.nav == nav_menu.home)
-
+        event=roll_event(event_chance)
+        if event!=nil then show_event() return end
         if p.cursor.nav.visited==false then show_rog_intro() return end
 
+        show_bsl()
+    end
+end
+
+event={}
+function show_event()
+    draw_inv_stash = false
+    scroll=0
+
+    scrn.drw = draw_event
+    scrn.upd = update_event
+end
+
+function draw_event()
+    local cur=p.cursor.nav
+    local text=event.text
+    rect(0,0,127,127,cur.c)
+
+    print("event!!",hcenter("event!!"),4,7)
+
+    print(sub(text,1,scroll),4,15,7)
+    scroll+=scroll_speed
+
+    local continue="press x to continue"
+    print(continue,hcenter(continue),110,7)
+end
+
+function update_event()
+    local len=#event.text
+    if scroll < len then
+        for i=0,5 do
+            if btnp(i) then scroll=len end
+        end
+    end
+    if btnp(5) and scroll>len then
+        event.effect()
+        if p.cursor.nav.visited==false then show_rog_intro() return end
         show_bsl()
     end
 end
@@ -351,6 +405,7 @@ end
 
 function show_bsl()
     draw_inv_stash = true
+    handle_home(p.cursor.nav == nav_menu.home)
     scrn.drw = draw_bsl
     scrn.upd = update_bsl
 end

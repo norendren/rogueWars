@@ -233,6 +233,84 @@ trans_menu={
     }
 }
 
+function low(i)
+    return function()
+        local mod=rnd(3)+1
+        i.curr=flr(i.low/mod)
+    end
+end
+function high(i)
+    return function()
+        local mod=rnd(3)+1
+        i.curr=flr(i.high*mod)
+    end
+end
+item_events={
+    artifact={
+        high=[[adventurers around here act like they have never seen a rare item in their lives. artifacts are selling for crazy high prices!]],
+        low=[[a dragon was slain, flooding the market with rare artifacts. time to buy!]]
+    },
+    wand={
+        high=[[an electrical surge exploded everyones wands, they will pay anything to get their hands on one!]],
+        low=[[harry potter cosplayers have invaded the dungeon, wands are at an all time low!]]
+    },
+    armor={
+        high=[[dungeon-wide obesity is at an all-time high, adventurers are paying anything for bigger armor]],
+        low=[[an enormous vein of mithril has been discovered, armor prices have plummeted!]]
+    },
+    weapon={
+        high=[[dual weilding is the hot new trend, everyone is looking to double their weapon supply!]],
+        low=[[a master blacksmith has moved in, forging high quality weapons and diluting the market and lowering prices]]
+    },
+    scroll={
+        high=[[everyone here remembered how to read, and they will pay any amount for scrolls!]],
+        low=[[everyone here forgot how to read, scrolls are cheaper than dirt!]]
+    },
+    potion={
+        high=[[the fountains here are literally flowing with health. buy buy buy!]],
+        low=[[adventurers drink health potions here like water, they cant get enough of the stuff!]]
+    }
+}
+
+o={
+    text=[[placeholder non item event]],
+    effect=function()
+        -- local p=items.artifact.low
+        -- local mod=rnd(4)
+        -- items.artifact.curr=p/mod
+    end
+}
+function roll_item_event()
+    -- randomly select item from the list
+    local key=item_map[flr(rnd(6)+1)]
+
+    if rnd(1)>0.5 then
+        return {
+            text=item_events[key].high,
+            effect=high(items[key])
+        }
+    else
+        return {
+            text=item_events[key].low,
+            effect=low(items[key])
+        }
+    end
+end
+function roll_event(chance)
+    -- 33 percent chance of event, 50 percent chance of *that* being item price, 50/50 high/low
+    local ch=rnd(101)
+    if ch>chance then
+        return nil
+    end
+
+    local item_ev=rnd(1)>0.5
+    if item_ev then
+        return roll_item_event()
+    else
+        return o
+    end
+end
+
 item_coords={
     base_x = 12,
     base_y = 88,
