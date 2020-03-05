@@ -14,7 +14,7 @@ in_inventory = true
 inv={
     artifact={
         disp="artifact",
-        amt=10,
+        amt=0,
         pos=1
     },
     wand={
@@ -66,9 +66,56 @@ function render_inv(c)
     end
 end
 
+stash_coords = {
+    base_x=5,
+    base_y=top_half_y,
+    x_off=45,
+    y_off = 8
+}
+stash={
+    artifact={
+        disp="artifact",
+        amt=0,
+        pos=1
+    },
+    wand={
+        disp="wand",
+        amt=0,
+        pos=2
+    },
+    armor={
+        disp="armor",
+        amt=0,
+        pos=3
+    },
+    weapon={
+        disp="weapon",
+        amt=0,
+        pos=4
+    },
+    scroll={
+        disp="scroll",
+        amt=0,
+        pos=5
+    },
+    potion={
+        disp="potion",
+        amt=0,
+        pos=6
+    }
+}
+function render_stash(c)
+    print("stash", stash_coords.base_x+3, stash_coords.base_y-12, c)
+    for k,v in pairs(stash) do
+        print(v.disp, v.x+8, v.y, c)
+        spr(v.sp,v.x-3,v.y-1)
+        print(v.amt, v.x+stash_coords.x_off, v.y, c)
+    end
+end
+
 money={
-    ones=0,
-    thousands=5,
+    ones=800,
+    thousands=0,
     tostr=function(self)
         local s=""
         s = s..self.thousands
@@ -173,50 +220,3 @@ p = {
         stash={}
     }
 }
-
-stash_coords = {
-    base_x=5,
-    base_y=top_half_y,
-    x_off=45,
-    y_off = 8
-}
-stash={
-    artifact={
-        disp="artifact",
-        amt=20,
-        pos=1
-    },
-    wand={
-        disp="wand",
-        amt=80,
-        pos=2
-    },
-    armor={
-        disp="armor",
-        amt=40,
-        pos=3
-    },
-    weapon={
-        disp="weapon",
-        amt=0,
-        pos=4
-    },
-    scroll={
-        disp="scroll",
-        amt=0,
-        pos=5
-    },
-    potion={
-        disp="potion",
-        amt=0,
-        pos=6
-    }
-}
-function render_stash(c)
-    print("stash", stash_coords.base_x+3, stash_coords.base_y-12, c)
-    for k,v in pairs(stash) do
-        print(v.disp, v.x+8, v.y, c)
-        spr(v.sp,v.x-3,v.y-1)
-        print(v.amt, v.x+stash_coords.x_off, v.y, c)
-    end
-end

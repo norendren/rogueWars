@@ -35,8 +35,11 @@ function preprocess(s, width)
     return fs
 end
 
-intro=[[you once were a humble merchant, but after a run-in with rodney the rude wizard, you have been cursed with the ability to travel between roguelikes!
-capitalist that you are, you must use the time you have left to amass as much wealth as possible, and maybe find a way out of this mess...]]
+intro=[[you were just an average roguelike merchant, until one day a vengeful genie cast you into the space between roguelikes, doomed to wander between games peddling your wares!
+if only there was a way to turn this terrible curse into a blessing...
+z = back/cancel
+x = confirm
+⬅️➡️⬆️⬇️ = navigate menus]]
 
 adom=[[the ancient domains of mystery, little is known about this place of wonder and chaos...
 they say most adventurers here die looking for puppies, you consider adding dog collars to your stocks.]]
@@ -47,10 +50,10 @@ you better hurry though, before you get removed from the game]]
 net=[[nethack is a land of many dangers both to players and shopkeepers with items too good to pass up.
 players have an annoying habit of constantly asking for the price of things, so you study them well]]
 
-brogue=[[players in brogue usually make due with what they find. their pockets overflow with gold they cant spend
+brogue=[[players in brogue usually make due with what they find, but their pockets overflow with gold they cant spend
 hopefully you can make a killing here without getting killed]]
 
-cog=[[you step foot into buzzing machine shop filled with lights and sounds you've never seen.
+cog=[[you step foot into a factory buzzing with lights and sounds you've never seen.
 you break out your trusty label maker hoping to con some of these robots into buying your wares]]
 
 gkh=[[the golden krone hotel, filled with vampires, humans and beasts of all manner

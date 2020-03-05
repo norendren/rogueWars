@@ -24,10 +24,10 @@ end_money=200
 yc=3
 
 function _init()
-    -- show_menu()
+    show_menu()
     -- show_intro()
     -- show_home_select()
-    show_navigation()
+    -- show_navigation()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()
@@ -53,6 +53,7 @@ function _init()
 end
 
 function init_rog_intro()
+    intro=preprocess(intro)
     nav_menu.adom.intro=preprocess(adom)
     nav_menu.dcss.intro=preprocess(dcss)
     nav_menu.net.intro=preprocess(net)
@@ -159,7 +160,7 @@ function draw_intro()
     scroll+=scroll_speed
 
     if scroll>=#intro and frame>10 then
-        print("press x to play", 30, 100, 7)
+        print("press x to play", 30, 120, 7)
     end
 end
 
@@ -170,7 +171,7 @@ function update_intro()
             if btnp(i) then scroll=#intro end
         end
     end
-    if (btnp(5)) and scroll>len then
+    if (btnp(5)) and scroll>#intro then
         show_home_select()
     end
 end

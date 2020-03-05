@@ -133,7 +133,7 @@ end
 nav_coords = {
     base_x=20,
     base_y=90,
-    x_off = 55,
+    x_off = 57,
     y_off = 8
 }
 nav_map={"adom","dcss","net","brogue","cog","gkh"}
