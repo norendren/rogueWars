@@ -27,10 +27,10 @@ end_money=200
 event_chance=80
 
 function _init()
-    -- show_menu()
+    show_menu()
     -- show_intro()
     -- show_home_select()
-    show_navigation()
+    -- show_navigation()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()
@@ -48,18 +48,27 @@ function _init()
     -- debug options
     inv.artifact.amt=20
     money.thousands=5
-
+    for k,v in pairs(nav_menu) do
+        if v !=nil then
+            v.visited=true
+        end
+    end
+    event_chance=90
     nav_menu.home = nav_menu.adom
     handle_home(p.cursor.nav == nav_menu.home)
+
+    -- end debug
+
+    
+    
     calc_inventory()
     randomize_prices()
     equip_coords()
-
     -- restructure strings to fit the window
-    init_rog_intro()
+    init_text()
 end
 
-function init_rog_intro()
+function init_text()
     intro=preprocess(intro)
 
     for k,item in pairs(item_events) do
@@ -142,13 +151,14 @@ function _draw()
 end
 
 function show_menu()
+    music(0,0,12)
     draw_inv_stash = false
     scrn.upd = update_menu
     scrn.drw = draw_menu
 end
 
 function update_menu()
-    if (btnp(5)) then
+    if btnp(5) then
         show_intro()
     end
 end
@@ -170,7 +180,6 @@ function show_intro()
 end
 
 function draw_intro()
-    -- todo: add help text and home roguelike
     local part=sub(intro,1,scroll)
     print(part,0,2,7)
     scroll+=scroll_speed
@@ -187,7 +196,7 @@ function update_intro()
             if btnp(i) then scroll=#intro end
         end
     end
-    if (btnp(5)) and scroll>#intro then
+    if btnp(5) and scroll>#intro then
         show_home_select()
     end
 end
@@ -241,9 +250,12 @@ function draw_home()
 end
 
 function update_home()
-    if btnp(2) and h.curr > 1 then h.curr-=1 end
-    if btnp(3) and h.curr < 6 then h.curr+=1 end
+    if btnp(2) and h.curr > 1 then sfx(0) h.curr-=1 end
+    
+    if btnp(3) and h.curr < 6 then sfx(0) h.curr+=1 end
+    
     if btnp(5) then 
+        music(-1,500)
         nav_menu.home = nav_menu[nav_map[h.curr]]
         show_navigation()
     end
@@ -295,20 +307,24 @@ yendor={
 function update_nav()
     local curs = p.cursor.nav.pos
 
-    if (btnp(0)) and curs > 3 then
+    if btnp(0) and curs > 3 then
+        sfx(0)
         p.cursor.nav = nav_menu[nav_map[curs-3]]
     end
-    if (btnp(1)) and curs <= 3 then
+    if btnp(1) and curs <= 3 then
+        sfx(0)
         p.cursor.nav = nav_menu[nav_map[curs+3]]
     end
-    if (btnp(2)) and curs > 1 then
+    if btnp(2) and curs > 1 then
+        sfx(0)
         if p.cursor.nav==yendor then
             p.cursor.nav=nav_menu[nav_map[3]]
         else
             p.cursor.nav = nav_menu[nav_map[curs-1]]
         end
     end
-    if (btnp(3)) and curs <= 6 then
+    if btnp(3) and curs <= 6 then
+        sfx(0)
         if won and (curs==6 or curs==3) then
             p.cursor.nav = yendor
         elseif p.cursor.nav==yendor then
@@ -318,11 +334,12 @@ function update_nav()
         end
         
     end
-    if (btnp(5)) and p.cursor.nav != nav_menu.l_visit then
+    if btnp(5) and p.cursor.nav != nav_menu.l_visit then
         for k,d in pairs(nav_menu) do d.l_visit = false end
 
         if p.cursor.nav==yendor then show_ending() return end
 
+        reset_item_colors()
         event=roll_event(event_chance)
         if event!=nil then show_event() return end
         if p.cursor.nav.visited==false then show_rog_intro() return end
@@ -411,7 +428,7 @@ function show_bsl()
 end
 
 function draw_bsl()
-    render_prices(7)
+    render_prices()
     render_bsl(7)
 
     -- player cursor
@@ -422,13 +439,15 @@ function update_bsl()
     local curs = p.cursor.bsl.pos
     local map = bsl_map
 
-    if (btnp(0)) and curs > 1 then
+    if btnp(0) and curs > 1 then
+        sfx(0)
         p.cursor.bsl = bsl[map[curs-1]]
     end
-    if (btnp(1)) and curs < #map then
+    if btnp(1) and curs < #map then
+        sfx(0)
         p.cursor.bsl = bsl[map[curs+1]]
     end
-    if (btnp(5)) then
+    if btnp(5) then
         if p.cursor.bsl.title == "leave" then
             aut-=1
             if aut == 0 then show_ending() return end
@@ -473,14 +492,17 @@ end
 function update_stash()
     local pos=p.cursor.stash.pos
     if btnp(0) and in_inventory then
+        sfx(0)
         in_inventory=false
         p.cursor.stash=stash[inv_st_map[pos]]
     end
     if btnp(1) and not in_inventory then
+        sfx(0)
         in_inventory=true
         p.cursor.stash=inv[inv_st_map[pos]]
     end
     if btnp(2) and pos >= 1 then
+        sfx(0)
         if pos==1 then pos=7 end
         if in_inventory then
             p.cursor.stash=inv[inv_st_map[pos-1]]
@@ -489,6 +511,7 @@ function update_stash()
         end
     end
     if btnp(3) and pos <= 6 then
+        sfx(0)
         if pos==6 then pos=0 end
         if in_inventory then
             p.cursor.stash=inv[inv_st_map[(pos+1)]]
@@ -532,14 +555,16 @@ end
 function update_stash_transfer()
     local pos=p.cursor.stash.pos
     local space = p.bag.capacity - p.bag.current
-    if(btnp(0)) and p.inf_trans.amt > 1 then 
+    if btnp(0) and p.inf_trans.amt > 1 then 
+        sfx(0)
         if p.inf_trans.amt-5 < 0 then
             p.inf_trans.amt=0
         else     
             p.inf_trans.amt-=5 
         end
     end
-    if(btnp(1)) then
+    if btnp(1) then
+        sfx(0)
         if p.inf_trans.amt + 5 > p.cursor.stash.amt then
             if not in_inventory and p.inf_trans.amt + 5 > space then
                 p.inf_trans.amt = space
@@ -554,7 +579,8 @@ function update_stash_transfer()
             end
         end
     end
-    if(btnp(2)) then 
+    if btnp(2) then 
+        sfx(0)
         if p.inf_trans.amt + 1 > p.cursor.stash.amt then
             if not in_inventory and p.inf_trans.amt + 5 > space then
                 p.inf_trans.amt = space
@@ -569,11 +595,12 @@ function update_stash_transfer()
             end
         end
     end
-    if(btnp(3)) and p.inf_trans.amt > 1 then p.inf_trans.amt-=1 end
+    if btnp(3) and p.inf_trans.amt > 1 then sfx(0) p.inf_trans.amt-=1 end
+    
 
-    if(btnp(4)) then show_stash() end
+    if btnp(4) then show_stash() end
 
-    if(btnp(5)) then
+    if btnp(5) then
         if in_inventory then
             stash[inv_st_map[pos]].amt += p.inf_trans.amt
             p.cursor.stash.amt -= p.inf_trans.amt
@@ -615,22 +642,26 @@ end
 function update_trans_select()
     local curs = p.cursor.items.pos
 
-    if (btnp(0)) and curs > 3 then
+    if btnp(0) and curs > 3 then
+        sfx(0)
         p.cursor.items = items[item_map[curs-3]]
     end
-    if (btnp(1)) and curs <= 3 then
+    if btnp(1) and curs <= 3 then
+        sfx(0)
         p.cursor.items = items[item_map[curs+3]]
     end
-    if (btnp(2)) and curs > 1 then
+    if btnp(2) and curs > 1 then
+        sfx(0)
         p.cursor.items = items[item_map[curs-1]]
     end
-    if (btnp(3)) and curs < 6 then
+    if btnp(3) and curs < 6 then
+        sfx(0)
         p.cursor.items = items[item_map[curs+1]]
     end
-    if (btnp(5)) then
+    if btnp(5) then
         show_trans_opts()
     end
-    if (btnp(4)) then
+    if btnp(4) then
         p.cursor.items = items.artifact -- back to baseline
         show_bsl()
     end
@@ -662,17 +693,19 @@ end
 
 function update_trans_opts()
     local curs = p.cursor.trans.pos
-    if (btnp(0)) and curs > 1 then
+    if btnp(0) and curs > 1 then
+        sfx(0)
         p.cursor.trans = trans_menu[trans_map[curs-1]]
     end
-    if (btnp(1)) and curs < 3 then
+    if btnp(1) and curs < 3 then
+        sfx(0)
         p.cursor.trans = trans_menu[trans_map[curs+1]]
     end
-    if (btnp(5)) then
+    if btnp(5) then
         p.inf_trans.amt = p.cursor.trans.amt
         show_final_trans()
     end
-    if(btnp(4)) then
+    if btnp(4) then
         p.inf_trans.buying = false
         p.inf_trans.selling = false
         show_trans_select()
@@ -694,21 +727,24 @@ function draw_final_trans()
 end
 
 function update_final_trans()
-    if(btnp(0)) and p.inf_trans.amt > 1 then 
+    if btnp(0) and p.inf_trans.amt > 1 then 
+        sfx(0)
         if p.inf_trans.amt-5 < 0 then
             p.inf_trans.amt=0
         else     
             p.inf_trans.amt-=5 
         end
     end
-    if(btnp(1)) then 
+    if btnp(1) then 
+        sfx(0)
         if p.inf_trans.amt + 5 > trans_menu.all.amt then
             p.inf_trans.amt = trans_menu.all.amt
         else
             p.inf_trans.amt+=5 
         end
     end
-    if(btnp(2)) then 
+    if btnp(2) then 
+        sfx(0)
         if p.inf_trans.amt + 1 > trans_menu.all.amt then
             p.inf_trans.amt = trans_menu.all.amt
         else
@@ -716,11 +752,11 @@ function update_final_trans()
         end
     end
 
-    if(btnp(3)) and p.inf_trans.amt > 1 then p.inf_trans.amt-=1 end
+    if btnp(3) and p.inf_trans.amt > 1 then sfx(0) p.inf_trans.amt-=1 end
 
-    if(btnp(4)) then show_trans_opts() end
+    if btnp(4) then show_trans_opts() end
 
-    if(btnp(5)) then
+    if btnp(5) then
         if p.inf_trans.buying then
             money:buy(p.inf_trans.amt, p.cursor.items.curr)
             inv[p.cursor.items.disp].amt += p.inf_trans.amt
@@ -732,6 +768,12 @@ function update_final_trans()
         p.inf_trans.selling = false
         calc_inventory()
         show_bsl()
+    end
+end
+
+function reset_item_colors()
+    for k,i in pairs(items) do
+        i.c=7
     end
 end
 
@@ -873,4 +915,20 @@ b0000000000000000000000000000000000000000000000000000000000000000000000000000000
 b000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b
 b000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000b
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+
+__sfx__
+000100000252003520065200d52000500005000050000500005000050000500005000050000500005000050000500005000050000500005000050000500005000050000500005000050000500005000050000500
+000600002d75028750227501b7501575012750107500f7500e7500e7501a750247502a7502e7501e700247002b700007000070000700007000070000700007000070000700007000070000700007000070000700
+011400000c0330253502525020450e6150252502045025250c0330253502525020450e6150252502045025250c0330252502045025350e6150204502535025250c0330253502525020450e615025250204502525
+011400001051512515150151a5151051512515150151a5151051512515150151a5151051512515150151a5151051512515170151c5151051512515170151c5151051512515160151c5151051512515160151c515
+011400002c7252c0152c7152a0252a7152a0152a7152f0152c7252c0152c7152801525725250152a7252a0152072520715207151e7251e7151e7151e715217152072520715207151e7251e7151e7151e7151e715
+011400000c0330653506525060450e6150652506045065250c0330653506525060450e6150652506045065250c0330952509045095350e6150904509535095250c0330953509525090450e615095250904509525
+0114000020725200152071520015217252101521715210152c7252c0152c7152c0152a7252a0152a7152a015257252501525715250152672526015267153401532725310152d715280152672525015217151c015
+__music__
+00 02424344
+01 02034344
+00 02034344
+00 02044344
+00 05044344
+02 05064344
 
