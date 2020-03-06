@@ -58,7 +58,7 @@ function render_inv(c)
         print("bag", inv_coords.base_x+1, inv_coords.base_y-7, p.bag.c)
     end
 
-    print(p.bag.current.." / "..p.bag.capacity, inv_coords.base_x+25, inv_coords.base_y-12, c)
+    print(p.bag.current.."/"..p.bag.capacity, inv_coords.base_x+27, inv_coords.base_y-12, c)
     for k,v in pairs(inv) do
         print(v.disp, v.x+8, v.y, c)
         spr(v.sp,v.x-3,v.y-1)
