@@ -17,57 +17,31 @@ function render_rects(c)
     rect(0,75,127,127,c)
 end
 
-function render_prices(c, money_check)
-    -- todo: implement highlighting for inventory space
-    money_check = money_check or false
+function render_prices()
+    --reset 'em somehow
+    local art=items.artifact
+    print(art.disp, art.x, art.y,art.c)
+    print(art.curr, item_coords.x_off, art.y,art.c)
 
-    if money.thousands == 0 and money.ones/items.artifact.curr < 1 and money_check then
-        print(items.artifact.disp, items.artifact.x, items.artifact.y,8)
-        print(items.artifact.curr, item_coords.x_off, items.artifact.y,8)
-    else
-        print(items.artifact.disp, items.artifact.x, items.artifact.y,c)
-        print(items.artifact.curr, item_coords.x_off, items.artifact.y,c)
-    end
+    local wand=items.wand
+    print(wand.disp, wand.x, wand.y,wand.c)
+    print(wand.curr, item_coords.x_off, wand.y,wand.c)
 
-    if money.thousands == 0 and money.ones/items.wand.curr < 1 and money_check then
-        print(items.wand.disp, items.wand.x, items.wand.y,8)
-        print(items.wand.curr, item_coords.x_off, items.wand.y,8)
-    else
-        print(items.wand.disp, items.wand.x, items.wand.y,c)
-        print(items.wand.curr, item_coords.x_off, items.wand.y,c)
-    end
+    local arm=items.armor
+    print(arm.disp, arm.x, arm.y,arm.c)
+    print(arm.curr, item_coords.x_off, arm.y,arm.c)
 
-    if money.thousands == 0 and money.ones/items.armor.curr < 1 and money_check then
-        print(items.armor.disp, items.armor.x, items.armor.y,8)
-        print(items.armor.curr, item_coords.x_off, items.armor.y,8)
-    else
-        print(items.armor.disp, items.armor.x, items.armor.y,c)
-        print(items.armor.curr, item_coords.x_off, items.armor.y,c)
-    end
+    local weap=items.weapon
+    print(weap.disp, weap.x, weap.y,weap.c)
+    print(weap.curr, (item_coords.x_off*2)+8, weap.y,weap.c)
 
-    if money.thousands == 0 and money.ones/items.weapon.curr < 1 and money_check then    
-        print(items.weapon.disp, items.weapon.x, items.weapon.y,8)
-        print(items.weapon.curr, (item_coords.x_off*2)+10, items.weapon.y,8)
-    else
-        print(items.weapon.disp, items.weapon.x, items.weapon.y,c)
-        print(items.weapon.curr, (item_coords.x_off*2)+10, items.weapon.y,c)
-    end
+    local scroll=items.scroll
+    print(scroll.disp, scroll.x, scroll.y,scroll.c)
+    print(scroll.curr, (item_coords.x_off*2)+8, scroll.y,scroll.c)
 
-    if money.thousands == 0 and money.ones/items.scroll.curr < 1 and money_check then    
-        print(items.scroll.disp, items.scroll.x, items.scroll.y,8)
-        print(items.scroll.curr, (item_coords.x_off*2)+10, items.scroll.y,8)
-    else
-        print(items.scroll.disp, items.scroll.x, items.scroll.y,c)
-        print(items.scroll.curr, (item_coords.x_off*2)+10, items.scroll.y,c)
-    end
-
-    if money.thousands == 0 and money.ones/items.potion.curr < 1 and money_check then    
-        print(items.potion.disp, items.potion.x, items.potion.y,8)
-        print(items.potion.curr, (item_coords.x_off*2)+10, items.potion.y,8)
-    else
-        print(items.potion.disp, items.potion.x, items.potion.y,c)
-        print(items.potion.curr, (item_coords.x_off*2)+10, items.potion.y,c)
-    end
+    local pot=items.potion
+    print(pot.disp, pot.x, pot.y,pot.c)
+    print(pot.curr, (item_coords.x_off*2)+8 , pot.y,pot.c)
 end
 
 function render_bsl(c)
@@ -236,12 +210,14 @@ trans_menu={
 function low(i)
     return function()
         local mod=rnd(3)+1
+        i.c=8
         i.curr=flr(i.low/mod)
     end
 end
 function high(i)
     return function()
         local mod=rnd(3)+1
+        i.c=11
         i.curr=flr(i.high*mod)
     end
 end
@@ -255,18 +231,18 @@ item_events={
         low=[[harry potter cosplayers have invaded the dungeon, wands are at an all time low!]]
     },
     armor={
-        high=[[dungeon-wide obesity is at an all-time high, adventurers are paying anything for bigger armor]],
+        high=[[dungeon-wide obesity has reached critical levels, adventurers are paying anything for bigger armor]],
         low=[[an enormous vein of mithril has been discovered, armor prices have plummeted!]]
     },
     weapon={
-        high=[[dual weilding is the hot new trend, everyone is looking to double their weapon supply!]],
-        low=[[a master blacksmith has moved in, forging high quality weapons and diluting the market and lowering prices]]
+        high=[[dual weilding is the hot new trend, players will pay anything to double their weapon supply!]],
+        low=[[a master blacksmith has moved in, forging tons of weapons, diluting the market and lowering prices]]
     },
     scroll={
         high=[[everyone here remembered how to read, and they will pay any amount for scrolls!]],
         low=[[everyone here forgot how to read, scrolls are cheaper than dirt!]]
     },
-    potion={
+    potion={ -- not actually eligible cuz they're so crappy
         high=[[the fountains here are literally flowing with health. buy buy buy!]],
         low=[[adventurers drink health potions here like water, they cant get enough of the stuff!]]
     }
@@ -282,9 +258,10 @@ o={
 }
 function roll_item_event()
     -- randomly select item from the list
-    local key=item_map[flr(rnd(6)+1)]
+    -- local key=item_map[flr(rnd(5)+1)]
+    local key=item_map[1]
 
-    if rnd(1)>0.5 then
+    if rnd(2)>1 then
         return {
             text=item_events[key].high,
             effect=high(items[key])
@@ -303,12 +280,14 @@ function roll_event(chance)
         return nil
     end
 
-    local item_ev=rnd(1)>0.5
-    if item_ev then
-        return roll_item_event()
-    else
-        return o
-    end
+    local item_ev=rnd(2)>1
+    return roll_item_event()
+    -- return nil
+    -- if item_ev then
+    --     return roll_item_event()
+    -- else
+    --     return o
+    -- end
 end
 
 item_coords={
@@ -326,7 +305,8 @@ items={
         low=1500,
         high=3000,
         curr=0,
-        pos=1
+        pos=1,
+        c=7
     },
     wand={
         disp="wand",
@@ -335,7 +315,8 @@ items={
         low=500,
         high=1400,
         curr=0,
-        pos=2
+        pos=2,
+        c=7
     },
     armor={
         disp="armor",
@@ -344,7 +325,8 @@ items={
         low=100,
         high=450,
         curr=0,
-        pos=3
+        pos=3,
+        c=7
     },
     weapon={
         disp="weapon",
@@ -353,7 +335,8 @@ items={
         low=30,
         high=90,
         curr=0,
-        pos=4
+        pos=4,
+        c=7
     },
     scroll={
         disp="scroll",
@@ -362,7 +345,8 @@ items={
         low=7,
         high=25,
         curr=0,
-        pos=5
+        pos=5,
+        c=7
     },
     potion={
         disp="potion",
@@ -371,6 +355,7 @@ items={
         low=1,
         high=6,
         curr=0,
-        pos=6
+        pos=6,
+        c=7
     }
 }
