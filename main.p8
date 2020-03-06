@@ -58,9 +58,6 @@ function _init()
     handle_home(p.cursor.nav == nav_menu.home)
 
     -- end debug
-
-    
-    
     calc_inventory()
     randomize_prices()
     equip_coords()
