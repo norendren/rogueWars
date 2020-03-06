@@ -256,10 +256,42 @@ o={
         -- items.artifact.curr=p/mod
     end
 }
+
+priest={
+    choice={"yes","no"},
+    text=[[a wandering priest offers to splash some holy water on your bag]],
+    effect=function()
+        local bag=p.bag
+        if bag.affix=="blessed" then
+            return
+        end
+        bag.affix="blessed"
+        bag.c=12
+        bag.capacity+=20
+    end
+}
+
+function roll_event(chance)
+    -- 33 percent chance of event, 50 percent chance of *that* being item price, 50/50 high/low
+    local ch=rnd(101)
+    if ch>chance then
+        return nil
+    end
+
+    local item_ev=rnd(2)>1
+    return priest
+    -- return roll_item_event()
+    -- return nil
+    -- if item_ev then
+    --     return roll_item_event()
+    -- else
+    --     return o
+    -- end
+end
+
 function roll_item_event()
     -- randomly select item from the list
-    -- local key=item_map[flr(rnd(5)+1)]
-    local key=item_map[1]
+    local key=item_map[flr(rnd(5)+1)]
 
     if rnd(2)>1 then
         return {
@@ -272,22 +304,6 @@ function roll_item_event()
             effect=low(items[key])
         }
     end
-end
-function roll_event(chance)
-    -- 33 percent chance of event, 50 percent chance of *that* being item price, 50/50 high/low
-    local ch=rnd(101)
-    if ch>chance then
-        return nil
-    end
-
-    local item_ev=rnd(2)>1
-    return roll_item_event()
-    -- return nil
-    -- if item_ev then
-    --     return roll_item_event()
-    -- else
-    --     return o
-    -- end
 end
 
 item_coords={

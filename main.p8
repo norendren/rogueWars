@@ -27,10 +27,10 @@ end_money=200
 event_chance=80
 
 function _init()
-    show_menu()
+    -- show_menu()
     -- show_intro()
     -- show_home_select()
-    -- show_navigation()
+    show_navigation()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()
@@ -74,7 +74,7 @@ function init_text()
         item.low=preprocess(item.low)
     end
 
-    -- t.text=preprocess(t.text)
+    priest.text=preprocess(priest.text)
     o.text=preprocess(o.text)
 
     nav_menu.adom.intro=preprocess(adom)
@@ -163,12 +163,7 @@ end
 
 function draw_menu()
     -- print("shopkeeprl", 40, 20, 7)
-    sspr(24,9,74,29,20,7)
-    rect(0,0,127,127,14)
-    
-    
-    
-    
+    sspr(24,9,74,24,20,7)
 
     if frame < 10 then
         print("press x to start", 30, 100, 7)
