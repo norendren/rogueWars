@@ -56,6 +56,7 @@ function _init()
     event_chance=90
     nav_menu.home = nav_menu.adom
     handle_home(p.cursor.nav == nav_menu.home)
+    -- won=true
 
     -- end debug
 
@@ -68,6 +69,7 @@ end
 
 function init_text()
     intro=preprocess(intro)
+    end_offer=preprocess(end_offer)
 
     for k,item in pairs(item_events) do
         item.high=preprocess(item.high)
@@ -202,27 +204,61 @@ end
 
 function show_ending()
     draw_inv_stash = false
+    scroll=0
+
     scrn.drw = draw_ending
     scrn.upd = update_ending
 end
-
+end_offer=[[you step through the portal into a familiar place. it is your old shop, but there is only one item on display:
+a gleaming wallet bathed in radiance. will you purchase it?]]
+end_menu={
+    yes={
+        text="yes (200,000)",
+        x=30,
+        y=70,
+        pos=1
+    },
+    no={
+        text="no",
+        x=30,
+        y=80,
+        pos=2
+    }
+}
+end_buy=[[]]
+end_reject=[[]]
+ec=end_menu.yes
 function draw_ending()
     local l="you lost..game over man!!!"
     local w="you won the game, grats"
 
     if won then
-        print(w, hcenter(w),50,7)
+        local part=sub(end_offer,1,scroll)
+        print(part,0,2,7)
+        scroll+=scroll_speed
+
+        if scroll>=#end_offer then
+            for k,t in pairs(end_menu) do print(t.text,t.x,t.y,7) end
+            spr(0,ec.x-10,ec.y-1)
+        end
     else
         print(l, hcenter(l),50,7)
     end
 
-    if frame < 10 then
-        print("press x to play again", hcenter("press x to play again"),110,7)
-    end
+    -- if frame < 10 then
+    --     print("press x to play again", hcenter("press x to play again"),110,7)
+    -- end
 end
 
 function update_ending()
-    if btnp(5) then show_menu() win=false end
+    if scroll < #end_offer then
+        for i=0,5 do
+            if btnp(i) then scroll=#end_offer end
+        end
+    end
+    if btnp(2) and ec.pos>1 then sfx(0) ec=end_menu.yes end
+    if btnp(3) and ec.pos<2 then sfx(0) ec=end_menu.no end
+    if btnp(5) and scroll>#end_offer then show_menu() win=false end
 end
 
 function show_home_select()
