@@ -152,7 +152,8 @@ function _draw()
         render_stash(7)
     end
     --full border
-    rect(0,0,127,127,14)
+    -- rect(0,0,127,127,14)
+
     scrn.drw()
     frame+=1
     frame=frame%20
@@ -185,6 +186,7 @@ function draw_menu()
     if frame < 10 then
         print("press x to start", 30, 100, 7)
     end
+    print("intro music by gruber",19,120,7)
 end
 
 function show_intro()
