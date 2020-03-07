@@ -48,10 +48,10 @@ function debug()
 end
 
 function _init()
-    -- show_menu()
+    show_menu()
     -- show_intro()
     -- show_home_select()
-    show_navigation()
+    -- show_navigation()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()
@@ -152,7 +152,7 @@ function _draw()
         render_stash(7)
     end
     --full border
-    -- rect(0,0,127,127,14)
+    rect(0,0,127,127,14)
     scrn.drw()
     frame+=1
     frame=frame%20
@@ -174,6 +174,13 @@ end
 function draw_menu()
     sspr(24,9,79,23,25,12)
     sspr(24,33,95,23,18,38)
+
+    local x=25
+    local y=75
+    for i=1,6 do
+        spr(i,x,y)
+        x+=14
+    end
 
     if frame < 10 then
         print("press x to start", 30, 100, 7)
