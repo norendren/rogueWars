@@ -7,6 +7,8 @@ __lua__
 #include events.p8
 
 --[[
+    put limit on stash for cheesiness
+    default inventory and stash transfer to max or 50
     full reset after loss/victory
     encounters
     items
@@ -24,7 +26,24 @@ draw_inv_stash = false
 won=false
 
 end_money=200
-event_chance=80
+event_chance=33
+
+function debug()
+      -- debug options
+    --   inv.artifact.amt=20
+    --   money.thousands=5
+      for k,v in pairs(nav_menu) do
+          if v !=nil then
+              v.visited=true
+          end
+      end
+    --   event_chance=90
+      nav_menu.home = nav_menu.adom
+      handle_home(p.cursor.nav == nav_menu.home)
+      -- won=true
+  
+      -- end debug
+end
 
 function _init()
     show_menu()
@@ -45,20 +64,7 @@ function _init()
     p.cursor.trans=trans_menu.middle
     p.cursor.stash=inv.artifact
 
-    -- debug options
-    inv.artifact.amt=20
-    money.thousands=5
-    for k,v in pairs(nav_menu) do
-        if v !=nil then
-            v.visited=true
-        end
-    end
-    event_chance=90
-    nav_menu.home = nav_menu.adom
-    handle_home(p.cursor.nav == nav_menu.home)
-    -- won=true
-
-    -- end debug
+    debug()
 
     calc_inventory()
     randomize_prices()
