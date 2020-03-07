@@ -114,7 +114,7 @@ function render_stash(c)
 end
 
 money={
-    ones=800,
+    ones=0,
     thousands=0,
     tostr=function(self)
         local s=""
