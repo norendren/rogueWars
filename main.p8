@@ -7,6 +7,7 @@ __lua__
 #include events.p8
 
 --[[
+    remove health if it's gone
     put limit on stash for cheesiness
     default inventory and stash transfer to max or 50
     full reset after loss/victory
@@ -30,7 +31,8 @@ event_chance=33
 
 function debug()
       -- debug options
-    --   inv.artifact.amt=20
+      inv.artifact.amt=20
+    --   stash.artifact.amt=205
     --   money.thousands=5
       for k,v in pairs(nav_menu) do
           if v !=nil then
@@ -46,10 +48,10 @@ function debug()
 end
 
 function _init()
-    show_menu()
+    -- show_menu()
     -- show_intro()
     -- show_home_select()
-    -- show_navigation()
+    show_navigation()
     -- show_bsl()
     -- show_stash()
     -- show_stash_transfer()

@@ -6,7 +6,7 @@ top_half_y=25
 inv_coords={
     base_x=72,
     base_y=top_half_y,
-    x_off=45,
+    x_off=42,
     y_off = 8
 }
 inv_st_map={"artifact","wand","armor","weapon","scroll","potion"}
@@ -69,7 +69,7 @@ end
 stash_coords = {
     base_x=5,
     base_y=top_half_y,
-    x_off=45,
+    x_off=42,
     y_off = 8
 }
 stash={
