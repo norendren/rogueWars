@@ -279,8 +279,8 @@ function roll_event(chance)
     end
 
     local item_ev=rnd(2)>1
-    return priest
-    -- return roll_item_event()
+    -- return priest
+    return roll_item_event()
     -- return nil
     -- if item_ev then
     --     return roll_item_event()
