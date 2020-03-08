@@ -556,7 +556,7 @@ function draw_event()
     local text=event.text
     rect(0,0,127,127,cur.c)
 
-    print("event!!"..event.type,hcenter("event!!"),4,7)
+    print("event!!",hcenter("event!!"),4,7)
 
     print(sub(text,1,scroll),4,15,7)
     scroll+=scroll_speed
