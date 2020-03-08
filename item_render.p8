@@ -52,7 +52,9 @@ end
 
 function render_rog_select(c)
     for k,rog in pairs(nav_menu) do
-        print(rog.title, rog.x,rog.y,rog.c)
+        if rog.y!=nil then
+            print(rog.title, rog.x,rog.y,rog.c)
+        end
     end
 end
 
@@ -248,60 +250,82 @@ item_events={
     }
 }
 
-o={
-    text=[[placeholder non item event]],
-    effect=function()
-        -- local p=items.artifact.low
-        -- local mod=rnd(4)
-        -- items.artifact.curr=p/mod
-    end
-}
-
 priest={
-    choice={"yes","no"},
+    type="choice",
+    choice={}, --dynamic text for priest choice
+    count=0,
+    cost=1200,
     text=[[a wandering priest offers to splash some holy water on your bag]],
-    effect=function()
+    effect=function(self)
         local bag=p.bag
         if bag.affix=="blessed" then
+            bag.affix="s.bless"
+            bag.c=12
+            bag.capacity+=20
+            money:buy(1,self.cost)
             return
+        elseif bag.affix==""then
+            bag.affix="blessed"
+            bag.c=12
+            bag.capacity+=20
+            money:buy(1,self.cost)
         end
-        bag.affix="blessed"
-        bag.c=12
-        bag.capacity+=20
+    end,
+    pop_choice=function(self)
+        self.choice={}
+        add(self.choice,"yes ("..self.cost..")")
+        add(self.choice,"no thanks")
     end
 }
 
 function roll_event(chance)
     -- 33 percent chance of event, 50 percent chance of *that* being item price, 50/50 high/low
+    if aut==10 and priest.count==0 then
+        priest.count+=1
+        return priest
+    elseif aut==3 and priest.count==1 then
+        priest.count+=1
+        return priest
+    end 
+
     local ch=rnd(101)
     if ch>chance then
         return nil
     end
 
-    local item_ev=rnd(2)>1
-    -- return priest
+    if aut<18 and priest.count<2 then
+        if rnd(5)<1 then
+            priest.count+=1
+            return priest
+        end
+    end
+
     return roll_item_event()
-    -- return nil
-    -- if item_ev then
-    --     return roll_item_event()
-    -- else
-    --     return o
-    -- end
 end
 
 function roll_item_event()
     -- randomly select item from the list
     local key=item_map[flr(rnd(5)+1)]
 
+    if p.bag.current==0 and money.thousands<1 then
+        return {
+            text=item_events[key].low,
+            effect=low(items[key]),
+            type="text"
+        }
+    end
+
     if rnd(2)>1 then
         return {
             text=item_events[key].high,
-            effect=high(items[key])
+            effect=high(items[key]),
+            type="text"
         }
     else
         return {
             text=item_events[key].low,
-            effect=low(items[key])
+            effect=low(items[key]),
+            type="text"
         }
     end
 end

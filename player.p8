@@ -45,10 +45,10 @@ inv={
 }
 function render_inv(c)
     if money.thousands == 0 then
-        print("$ "..money.ones, 92, 2, c)
+        print("$ "..money.ones, 78, 2, c)
     else
         -- gotta pad the ones in cases where < 100 or < 10
-        print("$ "..money:tostr(), 92, 2, c)
+        print("$ "..money:tostr(), 78, 2, c)
     end
 
     if p.bag.affix == "" then
@@ -72,6 +72,8 @@ stash_coords = {
     x_off=42,
     y_off = 8
 }
+stash_cap=100
+stash_current=0
 stash={
     artifact={
         disp="artifact",
@@ -106,6 +108,7 @@ stash={
 }
 function render_stash(c)
     print("stash", stash_coords.base_x+3, stash_coords.base_y-12, c)
+    print(stash_current.."/"..stash_cap, stash_coords.base_x+27, stash_coords.base_y-12, c)
     for k,v in pairs(stash) do
         print(v.disp, v.x+8, v.y, c)
         spr(v.sp,v.x-3,v.y-1)
