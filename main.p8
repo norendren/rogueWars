@@ -460,12 +460,13 @@ function update_nav()
         end
     end
     if btnp(3) and curs <= 6 then
-        sfx(0)
         if won and (curs==6 or curs==3) then
+            sfx(0)
             p.cursor.nav = yendor
         elseif p.cursor.nav==yendor then
             return
         elseif curs<6 then
+            sfx(0)
             p.cursor.nav = nav_menu[nav_map[curs+1]]
         end
         
