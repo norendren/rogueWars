@@ -5,7 +5,10 @@ __lua__
 #include player.p8
 #include item_render.p8
 #include events.p8
-
+--[[
+    Stash amount transfer is broken due to setting 
+    the amount higher than what's possible
+]]
 scrn = {}
 
 frame=0
@@ -25,7 +28,7 @@ event_chance=50
 function debug()
       -- debug options
       inv.artifact.amt=20
-    --   stash.artifact.amt=205
+      stash.artifact.amt=205
       money.thousands=5
       for k,v in pairs(nav_menu) do
           if v !=nil then
@@ -52,12 +55,12 @@ function _init()
     equip_coords()
     reset_player()
 
-    show_menu()
+    -- show_menu()
 
 
     -- show_intro()
     -- show_home_select()
-    -- show_navigation()
+    show_navigation()
     -- show_event()
     -- show_bsl()
     -- show_stash()
@@ -67,7 +70,7 @@ function _init()
     -- show_final_trans()
     -- show_ending()
 
-    -- debug()
+    debug()
 end
 
 function init_text()
