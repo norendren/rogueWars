@@ -28,8 +28,8 @@ event_chance=50
 function debug()
       -- debug options
       inv.artifact.amt=20
-      stash.artifact.amt=205
-      money.thousands=5
+      stash.artifact.amt=100
+      money.thousands=500
       for k,v in pairs(nav_menu) do
           if v !=nil then
               v.visited=true
@@ -39,6 +39,7 @@ function debug()
       nav_menu.home = nav_menu.adom
       handle_home(p.cursor.nav == nav_menu.home)
       won=false
+      calc_inventory()
       -- end debug
 end
 
@@ -55,12 +56,12 @@ function _init()
     equip_coords()
     reset_player()
 
-    -- show_menu()
+    show_menu()
 
 
     -- show_intro()
     -- show_home_select()
-    show_navigation()
+    -- show_navigation()
     -- show_event()
     -- show_bsl()
     -- show_stash()
@@ -719,7 +720,7 @@ function update_stash()
         show_bsl()
     end
     if btnp(5) then
-        p.inf_trans.amt = p.cursor.stash.amt
+        p.inf_trans.amt = 0
         show_stash_transfer()
     end
 end
